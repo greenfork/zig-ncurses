@@ -22,3 +22,4 @@ a.out
 
 zig-cache/
 zig-out/
+/cexamples/

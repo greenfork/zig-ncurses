@@ -215,6 +215,10 @@ pub const Window = struct {
         if (@call(.{}, c.wprintw, .{ self.ptr, format } ++ args) != Ok) return NcursesError.Generic;
     }
 
+    //====================================================================
+    // Character manipulation
+    //====================================================================
+
     pub fn wgetch(self: Window) !c_int {
         const result = c.wgetch(self.ptr);
         if (result == Err) return NcursesError.Generic;
@@ -230,6 +234,11 @@ pub const Window = struct {
 pub fn printw(comptime format: [*:0]const u8, args: anytype) !void {
     return try Window.default().wprintw(format, args);
 }
+
+//====================================================================
+// Character manipulation
+//====================================================================
+
 pub fn getch() !c_int {
     return try Window.default().wgetch();
 }

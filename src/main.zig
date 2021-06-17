@@ -1,5 +1,4 @@
 const std = @import("std");
-const nc = @import("c.zig").ncurses;
 pub usingnamespace @import("ncurses.zig");
 
 pub fn main() anyerror!void {

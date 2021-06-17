@@ -14,14 +14,14 @@ pub const cchar_t = extern struct {
 };
 
 pub const Color = enum(u8) {
-    color_black = 0,
-    color_red = 1,
-    color_green = 2,
-    color_yellow = 3,
-    color_blue = 4,
-    color_magenta = 5,
-    color_cyan = 6,
-    color_white = 7,
+    black = 0,
+    red = 1,
+    green = 2,
+    yellow = 3,
+    blue = 4,
+    magenta = 5,
+    cyan = 6,
+    white = 7,
 };
 
 // zig fmt: off
@@ -149,7 +149,37 @@ pub const Key = extern enum(c_int) {
 
     _,                  // Any other key
 };
+// zig fmt: on
+
 // zig fmt: off
+pub const Attribute = enum(u32) {
+    fn ncurses_bits(mask: u32, shift: u5) u32 {
+        const default_shift: u5 = 8;
+        return mask << default_shift + shift;
+    }
+
+    normal     = 0,
+    attributes = ncurses_bits(1, 0),
+    chartext   = ncurses_bits(1, 0) - 1,
+    color      = ncurses_bits((@as(u32, 1) << 8) - 1, 0),
+    standout   = ncurses_bits(1, 8),
+    underline  = ncurses_bits(1, 9),
+    reverse    = ncurses_bits(1, 10),
+    blink      = ncurses_bits(1, 11),
+    dim        = ncurses_bits(1, 12),
+    bold       = ncurses_bits(1, 13),
+    altcharset = ncurses_bits(1, 14),
+    invis      = ncurses_bits(1, 15),
+    protect    = ncurses_bits(1, 16),
+    horizontal = ncurses_bits(1, 17),
+    left       = ncurses_bits(1, 18),
+    low        = ncurses_bits(1, 19),
+    right      = ncurses_bits(1, 20),
+    top        = ncurses_bits(1, 21),
+    vertical   = ncurses_bits(1, 22),
+    italic     = ncurses_bits(1, 23),
+};
+// zig fmt: on
 
 pub const NcursesError = error{
     Generic,
@@ -179,68 +209,73 @@ pub const Window = struct {
     // Printing
     //====================================================================
 
-    pub fn printw(comptime format: [*:0]const u8, args: anytype) !void {
-        if (@call(.{}, c.printw, .{format} ++ args) != Ok) return NcursesError.Generic;
-    }
-    pub fn wprintw(self: *Window, comptime format: [*:0]const u8, args: anytype) !void {
+    pub fn wprintw(self: Window, comptime format: [*:0]const u8, args: anytype) !void {
         if (@call(.{}, c.printw, .{ self.ptr, format } ++ args) != Ok) return NcursesError.Generic;
     }
 
-    pub fn getch() !c_int {
-        const result = c.getch();
-        if (result == Err) return NcursesError.Generic;
-
-        return result;
-    }
     pub fn wgetch(self: Window) !c_int {
         const result = c.wgetch(self.ptr);
         if (result == Err) return NcursesError.Generic;
 
         return result;
     }
-
-    //====================================================================
-    // Input options
-    //====================================================================
-
-    pub fn cbreak() !void {
-        if (c.cbreak() == Err) return NcursesError.Generic;
-    }
-    pub fn nocbreak() !void {
-        if (c.nocbreak() == Err) return NcursesError.Generic;
-    }
-    pub fn echo() !void {
-        if (c.echo() == Err) return NcursesError.Generic;
-    }
-    pub fn noecho() !void {
-        if (c.noecho() == Err) return NcursesError.Generic;
-    }
-    pub fn raw() !void {
-        if (c.raw() == Err) return NcursesError.Generic;
-    }
-    pub fn noraw() !void {
-        if (c.noraw() == Err) return NcursesError.Generic;
-    }
-    pub fn keypad(self: *Window, bf: bool) !void {
-        if (c.keypad(self.ptr, bf) == Err) return NcursesError.Generic;
-    }
-
-    //====================================================================
-    // Character and window attribute control
-    //====================================================================
-
-    pub fn attron(attrs: c_int) !void {
-        if (c.attron(attrs) == Err) return NcursesError.Generic;
-    }
-    pub fn attroff(attrs: c_int) !void {
-        if (c.attron(attrs) == Err) return NcursesError.Generic;
-    }
-
-    //====================================================================
-    // Refresh windows and lines
-    //====================================================================
-
-    pub fn refresh() !void {
-        if (c.refresh() == Err) return NcursesError.Generic;
-    }
 };
+
+//====================================================================
+// Printing
+//====================================================================
+
+pub fn printw(comptime format: [*:0]const u8, args: anytype) !void {
+    if (@call(.{}, c.printw, .{format} ++ args) != Ok) return NcursesError.Generic;
+}
+pub fn getch() !c_int {
+    const result = c.getch();
+    if (result == Err) return NcursesError.Generic;
+
+    return result;
+}
+
+//====================================================================
+// Input options
+//====================================================================
+
+pub fn cbreak() !void {
+    if (c.cbreak() == Err) return NcursesError.Generic;
+}
+pub fn nocbreak() !void {
+    if (c.nocbreak() == Err) return NcursesError.Generic;
+}
+pub fn echo() !void {
+    if (c.echo() == Err) return NcursesError.Generic;
+}
+pub fn noecho() !void {
+    if (c.noecho() == Err) return NcursesError.Generic;
+}
+pub fn raw() !void {
+    if (c.raw() == Err) return NcursesError.Generic;
+}
+pub fn noraw() !void {
+    if (c.noraw() == Err) return NcursesError.Generic;
+}
+pub fn keypad(self: Window, bf: bool) !void {
+    if (c.keypad(self.ptr, bf) == Err) return NcursesError.Generic;
+}
+
+//====================================================================
+// Character and window attribute control
+//====================================================================
+
+pub fn attron(attrs: c_int) !void {
+    if (c.attron(attrs) == Err) return NcursesError.Generic;
+}
+pub fn attroff(attrs: c_int) !void {
+    if (c.attron(attrs) == Err) return NcursesError.Generic;
+}
+
+//====================================================================
+// Refresh windows and lines
+//====================================================================
+
+pub fn refresh() !void {
+    if (c.refresh() == Err) return NcursesError.Generic;
+}

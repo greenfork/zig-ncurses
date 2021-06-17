@@ -6,6 +6,8 @@ pub const attr_t = chtype;
 
 const Err = c.ERR; // -1
 const Ok = c.OK; // 0
+const True = c.TRUE; // 1
+const False = c.FALSE; // 0
 
 pub const cchar_t = extern struct {
     attr: attr_t,
@@ -13,7 +15,7 @@ pub const cchar_t = extern struct {
 };
 
 // zig fmt: off
-pub const Color = extern enum(u8) {
+pub const Color = extern enum(c_short) {
     black   = 0,
     red     = 1,
     green   = 2,
@@ -154,31 +156,31 @@ pub const Key = extern enum(c_int) {
 
 // zig fmt: off
 pub const Attribute = extern enum(u32) {
-    fn ncurses_bits(mask: u32, shift: u5) u32 {
+    fn ncursesBits(mask: u32, shift: u5) u32 {
         const default_shift: u5 = 8;
         return mask << default_shift + shift;
     }
 
     normal     = 0,
-    attributes = ncurses_bits(1, 0),
-    chartext   = ncurses_bits(1, 0) - 1,
-    color      = ncurses_bits((1 << 8) - 1, 0),
-    standout   = ncurses_bits(1, 8),
-    underline  = ncurses_bits(1, 9),
-    reverse    = ncurses_bits(1, 10),
-    blink      = ncurses_bits(1, 11),
-    dim        = ncurses_bits(1, 12),
-    bold       = ncurses_bits(1, 13),
-    altcharset = ncurses_bits(1, 14),
-    invis      = ncurses_bits(1, 15),
-    protect    = ncurses_bits(1, 16),
-    horizontal = ncurses_bits(1, 17),
-    left       = ncurses_bits(1, 18),
-    low        = ncurses_bits(1, 19),
-    right      = ncurses_bits(1, 20),
-    top        = ncurses_bits(1, 21),
-    vertical   = ncurses_bits(1, 22),
-    italic     = ncurses_bits(1, 23),
+    attributes = ncursesBits(1, 0),
+    chartext   = ncursesBits(1, 0) - 1,
+    color      = ncursesBits((1 << 8) - 1, 0),
+    standout   = ncursesBits(1, 8),
+    underline  = ncursesBits(1, 9),
+    reverse    = ncursesBits(1, 10),
+    blink      = ncursesBits(1, 11),
+    dim        = ncursesBits(1, 12),
+    bold       = ncursesBits(1, 13),
+    altcharset = ncursesBits(1, 14),
+    invis      = ncursesBits(1, 15),
+    protect    = ncursesBits(1, 16),
+    horizontal = ncursesBits(1, 17),
+    left       = ncursesBits(1, 18),
+    low        = ncursesBits(1, 19),
+    right      = ncursesBits(1, 20),
+    top        = ncursesBits(1, 21),
+    vertical   = ncursesBits(1, 22),
+    italic     = ncursesBits(1, 23),
 };
 // zig fmt: on
 
@@ -186,13 +188,49 @@ pub const NcursesError = error{
     Generic,
 };
 
+pub extern "ncurses" var curscr: *c._win_st;
+pub extern "ncurses" var newscr: *c._win_st;
 pub extern "ncurses" var stdscr: *c._win_st;
+pub extern "ncurses" var ttytype: [*:0]const u8;
+pub extern "ncurses" var COLORS: c_int;
+pub extern "ncurses" var COLOR_PAIRS: c_int;
+pub extern "ncurses" var COLS: c_int;
+pub extern "ncurses" var ESCDELAY: c_int;
+pub extern "ncurses" var LINES: c_int;
+pub extern "ncurses" var TABSIZE: c_int;
 
 pub const Window = struct {
     ptr: *c._win_st,
 
-    pub fn default() Window {
+    pub fn cur() Window {
+        return Window{ .ptr = curscr };
+    }
+    pub fn new() Window {
+        return Window{ .ptr = newscr };
+    }
+    pub fn std() Window {
         return Window{ .ptr = stdscr };
+    }
+    pub fn ttytype() [*:0]const u8 {
+        return ttytype;
+    }
+    pub fn colors() c_int {
+        return COLORS;
+    }
+    pub fn colorPairs() c_int {
+        return COLOR_PAIRS;
+    }
+    pub fn cols() c_int {
+        return COLS;
+    }
+    pub fn escdelay() c_int {
+        return ESCDELAY;
+    }
+    pub fn lines() c_int {
+        return LINES;
+    }
+    pub fn tabsize() c_int {
+        return TABSIZE;
     }
 
     //====================================================================
@@ -227,7 +265,7 @@ pub const Window = struct {
     }
 
     //====================================================================
-    // Character manipulation
+    // Input
     //====================================================================
 
     pub fn wgetch(self: Window) !c_int {
@@ -235,6 +273,72 @@ pub const Window = struct {
         if (result == Err) return NcursesError.Generic;
 
         return result;
+    }
+    pub fn mvwgetch(self: Window, y: c_int, x: c_int) !c_int {
+        const result = c.mvwgetch(self.ptr, y, x);
+        if (result == Err) return NcursesError.Generic;
+
+        return result;
+    }
+    pub fn wscanw(self: Window, comptime format: [*:0]const u8, args: anytype) !c_int {
+        const result = @call(.{}, c.wprintw, .{ self.ptr, format } ++ args);
+        if (result == Err) {
+            return NcursesError.Generic;
+        } else {
+            return result;
+        }
+    }
+    pub fn mvwscanw(self: Window, y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !c_int {
+        const result = @call(.{}, c.wprintw, .{ self.ptr, y, x, format } ++ args);
+        if (result == Err) {
+            return NcursesError.Generic;
+        } else {
+            return result;
+        }
+    }
+    pub fn wgetstr(self: Window, str: [*:0]u8) !void {
+        if (c.wgetstr(self.ptr, str) == Err) return NcursesError.Generic;
+    }
+    pub fn wgetnstr(self: Window, str: [*:0]u8, n: c_int) !void {
+        if (c.wgetstr(self.ptr, str, n) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwgetstr(self: Window, y: c_int, x: c_int, str: [*:0]u8) !void {
+        if (c.mvwgetstr(self.ptr, y, x, str) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwgetnstr(self: Window, y: c_int, x: c_int, str: [*:0]u8, n: c_int) !void {
+        if (c.mvwgetnstr(self.ptr, y, x, str, n) == Err) return NcursesError.Generic;
+    }
+
+    //====================================================================
+    // Character and window attribute control
+    //====================================================================
+
+    pub fn wattr_get(self: Window, attrs: *attr_t, pair: *c_short, opts: *c_void) !void {
+        if (c.wattr_get(self.ptr, attrs, pair, opts) == Err) return NcursesError.Generic;
+    }
+    pub fn wattr_set(self: Window, attrs: attr_t, pair: c_short, opts: *c_void) !void {
+        if (c.wattr_set(self.ptr, attrs, pair, opts) == Err) return NcursesError.Generic;
+    }
+    pub fn wattr_off(self: Window, attrs: attr_t, opts: *c_void) !void {
+        if (c.wattr_off(self.ptr, attrs, opts) == Err) return NcursesError.Generic;
+    }
+    pub fn wattr_on(self: Window, attrs: attr_t, opts: *c_void) !void {
+        if (c.wattr_on(self.ptr, attrs, opts) == Err) return NcursesError.Generic;
+    }
+    pub fn wattroff(self: Window, attrs: c_int) !void {
+        if (c.wattroff(self.ptr, attrs) == Err) return NcursesError.Generic;
+    }
+    pub fn wattron(self: Window, attrs: c_int) !void {
+        if (c.wattron(self.ptr, attrs) == Err) return NcursesError.Generic;
+    }
+    pub fn wattrset(self: Window, attrs: c_int) !void {
+        if (c.wattrset(self.ptr, attrs) == Err) return NcursesError.Generic;
+    }
+    pub fn wchgat(self: Window, n: c_int, attr: attr_t, pair: c_short, opts: ?*const c_void) !void {
+        if (c.wchgat(self.ptr, n, attr, pair, opts) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwchgat(self: Window, y: c_int, x: c_int, n: c_int, attr: attr_t, pair: c_short, opts: ?*const c_void) !void {
+        if (c.mvwchgat(self.ptr, y, x, n, attr, pair, opts) == Err) return NcursesError.Generic;
     }
 
     //====================================================================
@@ -281,6 +385,14 @@ pub const Window = struct {
     pub inline fn getparx(self: Window) c_int {
         return c.getparx(self.ptr);
     }
+
+    //====================================================================
+    // Movement
+    //====================================================================
+
+    pub fn wmove(self: Window, y: c_int, x: c_int) !void {
+        if (c.wmove(self.ptr, y, x) == Err) return NcursesError.Generic;
+    }
 };
 
 //====================================================================
@@ -288,27 +400,54 @@ pub const Window = struct {
 //====================================================================
 
 pub inline fn printw(comptime format: [*:0]const u8, args: anytype) !void {
-    return try Window.default().wprintw(format, args);
+    return try Window.std().wprintw(format, args);
 }
 pub inline fn mvprintw(y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !void {
-    return try Window.default().mvwprintw(y, x, format, args);
+    return try Window.std().mvwprintw(y, x, format, args);
 }
 pub inline fn addch(ch: chtype) !void {
-    return try Window.default().waddch(ch);
+    return try Window.std().waddch(ch);
 }
 pub inline fn mvaddch(y: c_int, x: c_int, ch: chtype) !void {
-    return try Window.default().mvwaddch(y, x, ch);
+    return try Window.std().mvwaddch(y, x, ch);
 }
 pub inline fn echochar(ch: chtype) !void {
-    return try Window.default().wechochar(ch);
+    return try Window.std().wechochar(ch);
 }
 
 //====================================================================
-// Character manipulation
+// Input
 //====================================================================
 
 pub inline fn getch() !c_int {
-    return try Window.default().wgetch();
+    return try Window.std().wgetch();
+}
+pub inline fn mvgetch(y: c_int, x: c_int) !c_int {
+    return try Window.std().mvwgetch(y, x);
+}
+pub fn ungetch(ch: c_int) !void {
+    if (c.ungetch(ch) == Err) return NcursesError.Generic;
+}
+pub fn has_key(ch: c_int) bool {
+    return c.has_key(ch) == True;
+}
+pub inline fn scanw(comptime format: [*:0]const u8, args: anytype) !c_int {
+    return try Window.std().wscanw(format, args);
+}
+pub inline fn mvscanw(y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !c_int {
+    return try Window.std().mvwscanw(format, args);
+}
+pub inline fn getstr(str: [*:0]u8) !void {
+    return try Window.std().wgetstr(str);
+}
+pub inline fn getnstr(str: [*:0]u8, n: c_int) !void {
+    return try Window.std().wgetnstr(str, n);
+}
+pub inline fn mvgetstr(y: c_int, x: c_int, str: [*:0]u8) !void {
+    return try Window.std().mvwgetstr(y, x, str);
+}
+pub inline fn mvgetnstr(y: c_int, x: c_int, str: [*:0]u8, n: c_int) !void {
+    return try Window.std().mvwgetnstr(y, x, str, n);
 }
 
 //====================================================================
@@ -341,11 +480,32 @@ pub fn keypad(self: Window, bf: bool) !void {
 // Character and window attribute control
 //====================================================================
 
-pub fn attron(attrs: c_int) !void {
-    if (c.attron(attrs) == Err) return NcursesError.Generic;
+pub inline fn attr_get(attrs: *attr_t, pair: *c_short, opts: *c_void) !void {
+    return try Window.std().wattr_get(attrs, pair, opts);
 }
-pub fn attroff(attrs: c_int) !void {
-    if (c.attron(attrs) == Err) return NcursesError.Generic;
+pub inline fn attr_set(attrs: attr_t, pair: c_short, opts: *c_void) !void {
+    return try Window.std().wattr_set(attrs, pair, opts);
+}
+pub inline fn attr_off(attrs: attr_t, opts: *c_void) !void {
+    return try Window.std().wattr_off(attrs, opts);
+}
+pub inline fn attr_on(attrs: attr_t, opts: *c_void) !void {
+    return try Window.std().wattr_on(attrs, opts);
+}
+pub inline fn attroff(attrs: c_int) !void {
+    return try Window.std().wattroff(attrs);
+}
+pub inline fn attron(attrs: c_int) !void {
+    return try Window.std().wattron(attrs);
+}
+pub inline fn attrset(attrs: c_int) !void {
+    return try Window.std().wattrset(attrs);
+}
+pub inline fn chgat(n: c_int, attr: attr_t, pair: c_short, opts: ?*const c_void) !void {
+    return try Window.std().wchgat(n, attr, pair, opts);
+}
+pub inline fn mvchgat(y: c_int, x: c_int, n: c_int, attr: attr_t, pair: c_short, opts: ?*const c_void) !void {
+    return try Window.std().mvwchgat(y, x, n, attr, pair, opts);
 }
 
 //====================================================================
@@ -354,4 +514,62 @@ pub fn attroff(attrs: c_int) !void {
 
 pub fn refresh() !void {
     if (c.refresh() == Err) return NcursesError.Generic;
+}
+
+//====================================================================
+// Movement
+//====================================================================
+
+pub inline fn move(y: c_int, x: c_int) !void {
+    return try Window.std().wmove(y, x);
+}
+
+//====================================================================
+// Colors
+//====================================================================
+
+pub fn start_color() !void {
+    if (c.start_color() == Err) return NcursesError.Generic;
+}
+pub fn has_colors() bool {
+    return c.has_colors();
+}
+pub fn can_change_color() bool {
+    return c.can_change_color();
+}
+pub fn init_pair(pair: c_short, f: c_short, b: c_short) !void {
+    if (c.init_pair(pair, f, b) == Err) return NcursesError.Generic;
+}
+pub fn init_color(color: c_short, r: c_short, g: c_short, b: c_short) !void {
+    if (c.init_color(color, r, g, b) == Err) return NcursesError.Generic;
+}
+pub fn init_extended_pair(pair: c_int, f: c_int, b: c_int) !void {
+    if (c.init_pair(pair, f, b) == Err) return NcursesError.Generic;
+}
+pub fn init_extended_color(color: c_int, r: c_int, g: c_int, b: c_int) !void {
+    if (c.init_color(color, r, g, b) == Err) return NcursesError.Generic;
+}
+pub fn pair_content(pair: c_short, f: *c_short, b: *c_short) !void {
+    if (c.color_content(pair, f, b) == Err) return NcursesError.Generic;
+}
+pub fn color_content(color: c_short, r: *c_short, g: *c_short, b: *c_short) !void {
+    if (c.color_content(color, r, g, b) == Err) return NcursesError.Generic;
+}
+pub fn extended_pair_content(pair: c_int, f: *c_int, b: *c_int) !void {
+    if (c.color_content(pair, f, b) == Err) return NcursesError.Generic;
+}
+pub fn extended_color_content(color: c_int, r: *c_int, g: *c_int, b: *c_int) !void {
+    if (c.color_content(color, r, g, b) == Err) return NcursesError.Generic;
+}
+pub fn reset_color_pairs() void {
+    c.reset_color_pairs();
+}
+pub fn pair_number(attrs: c_int) c_int {
+    return @intCast(
+        c_int,
+        ((@intCast(c_ulong, attrs) & @enumToInt(Attribute.color)) >> Attribute.default_shift),
+    );
+}
+pub fn color_pair(n: c_int) c_int {
+    return Attribute.ncursesBits(n, 0) & @enumToInt(Attribute.color);
 }

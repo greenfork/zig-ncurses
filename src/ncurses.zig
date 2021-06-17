@@ -1,4 +1,3 @@
-const Allocator = std.mem.Allocator;
 const c = @import("c.zig");
 
 pub const chtype = c_uint;
@@ -214,6 +213,9 @@ pub const Window = struct {
     pub fn wprintw(self: Window, comptime format: [*:0]const u8, args: anytype) !void {
         if (@call(.{}, c.wprintw, .{ self.ptr, format } ++ args) != Ok) return NcursesError.Generic;
     }
+    pub fn mvwprintw(self: Window, y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !void {
+        if (@call(.{}, c.mvwprintw, .{ self.ptr, y, x, format } ++ args) != Ok) return NcursesError.Generic;
+    }
 
     //====================================================================
     // Character manipulation
@@ -225,6 +227,21 @@ pub const Window = struct {
 
         return result;
     }
+
+    //====================================================================
+    // Coordinates
+    //====================================================================
+
+    pub fn getmaxyx(self: Window, y: *c_int, x: *c_int) void {
+        y.* = getmaxy(self);
+        x.* = getmaxx(self);
+    }
+    pub fn getmaxy(self: Window) c_int {
+        return c.getmaxy(self.ptr);
+    }
+    pub fn getmaxx(self: Window) c_int {
+        return c.getmaxx(self.ptr);
+    }
 };
 
 //====================================================================
@@ -233,6 +250,9 @@ pub const Window = struct {
 
 pub inline fn printw(comptime format: [*:0]const u8, args: anytype) !void {
     return try Window.default().wprintw(format, args);
+}
+pub inline fn mvprintw(y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !void {
+    return try Window.default().mvwprintw(y, x, format, args);
 }
 
 //====================================================================

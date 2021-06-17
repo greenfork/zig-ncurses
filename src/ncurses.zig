@@ -231,7 +231,7 @@ pub const Window = struct {
 // Printing
 //====================================================================
 
-pub fn printw(comptime format: [*:0]const u8, args: anytype) !void {
+pub inline fn printw(comptime format: [*:0]const u8, args: anytype) !void {
     return try Window.default().wprintw(format, args);
 }
 
@@ -239,7 +239,7 @@ pub fn printw(comptime format: [*:0]const u8, args: anytype) !void {
 // Character manipulation
 //====================================================================
 
-pub fn getch() !c_int {
+pub inline fn getch() !c_int {
     return try Window.default().wgetch();
 }
 

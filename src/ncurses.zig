@@ -1,5 +1,5 @@
 const Allocator = std.mem.Allocator;
-const c = @import("c.zig").ncurses;
+const c = @import("c.zig");
 
 pub const chtype = c_uint;
 pub const mmask_t = c_uint;

@@ -1,3 +1,3 @@
-pub const ncurses = @cImport({
+pub usingnamespace @cImport({
     @cInclude("ncurses.h");
 });

@@ -13,6 +13,15 @@ pub fn main() anyerror!void {
     try mvprintw(@divTrunc(row, 2), @divTrunc(col - @intCast(c_int, std.mem.len(str)), 2), "%s", .{str});
     try mvprintw(row - 2, 0, "This screen has %d rows and %d columns\n", .{ row, col });
     try printw("Try resizing your program", .{});
+    try addch('c');
+    try mvaddch(10, 10, 'b');
+    try echochar('d');
+    Window.default().getyx(&row, &col);
+    try mvprintw(15, 0, "Cursor %d rows and %d columns\n", .{ row, col });
+    Window.default().getbegyx(&row, &col);
+    try mvprintw(17, 0, "Beg %d rows and %d columns\n", .{ row, col });
+    Window.default().getparyx(&row, &col);
+    try mvprintw(19, 0, "Par %d rows and %d columns\n", .{ row, col });
 
     // try raw();
     // try keypad(Window.default(), true);

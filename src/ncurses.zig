@@ -211,10 +211,19 @@ pub const Window = struct {
     //====================================================================
 
     pub fn wprintw(self: Window, comptime format: [*:0]const u8, args: anytype) !void {
-        if (@call(.{}, c.wprintw, .{ self.ptr, format } ++ args) != Ok) return NcursesError.Generic;
+        if (@call(.{}, c.wprintw, .{ self.ptr, format } ++ args) == Err) return NcursesError.Generic;
     }
     pub fn mvwprintw(self: Window, y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !void {
-        if (@call(.{}, c.mvwprintw, .{ self.ptr, y, x, format } ++ args) != Ok) return NcursesError.Generic;
+        if (@call(.{}, c.mvwprintw, .{ self.ptr, y, x, format } ++ args) == Err) return NcursesError.Generic;
+    }
+    pub fn waddch(self: Window, ch: chtype) !void {
+        if (c.waddch(self.ptr, ch) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwaddch(self: Window, y: c_int, x: c_int, ch: chtype) !void {
+        if (c.mvwaddch(self.ptr, y, x, ch) == Err) return NcursesError.Generic;
+    }
+    pub fn wechochar(self: Window, ch: chtype) !void {
+        if (c.wechochar(self.ptr, ch) == Err) return NcursesError.Generic;
     }
 
     //====================================================================
@@ -232,15 +241,45 @@ pub const Window = struct {
     // Coordinates
     //====================================================================
 
+    pub fn getyx(self: Window, y: *c_int, x: *c_int) void {
+        y.* = getcury(self);
+        x.* = getcurx(self);
+    }
+    pub inline fn getcury(self: Window) c_int {
+        return c.getcury(self.ptr);
+    }
+    pub inline fn getcurx(self: Window) c_int {
+        return c.getcurx(self.ptr);
+    }
+    pub fn getbegyx(self: Window, y: *c_int, x: *c_int) void {
+        y.* = getbegy(self);
+        x.* = getbegx(self);
+    }
+    pub inline fn getbegy(self: Window) c_int {
+        return c.getbegy(self.ptr);
+    }
+    pub inline fn getbegx(self: Window) c_int {
+        return c.getbegx(self.ptr);
+    }
     pub fn getmaxyx(self: Window, y: *c_int, x: *c_int) void {
         y.* = getmaxy(self);
         x.* = getmaxx(self);
     }
-    pub fn getmaxy(self: Window) c_int {
+    pub inline fn getmaxy(self: Window) c_int {
         return c.getmaxy(self.ptr);
     }
-    pub fn getmaxx(self: Window) c_int {
+    pub inline fn getmaxx(self: Window) c_int {
         return c.getmaxx(self.ptr);
+    }
+    pub fn getparyx(self: Window, y: *c_int, x: *c_int) void {
+        y.* = getpary(self);
+        x.* = getparx(self);
+    }
+    pub inline fn getpary(self: Window) c_int {
+        return c.getpary(self.ptr);
+    }
+    pub inline fn getparx(self: Window) c_int {
+        return c.getparx(self.ptr);
     }
 };
 
@@ -253,6 +292,15 @@ pub inline fn printw(comptime format: [*:0]const u8, args: anytype) !void {
 }
 pub inline fn mvprintw(y: c_int, x: c_int, comptime format: [*:0]const u8, args: anytype) !void {
     return try Window.default().mvwprintw(y, x, format, args);
+}
+pub inline fn addch(ch: chtype) !void {
+    return try Window.default().waddch(ch);
+}
+pub inline fn mvaddch(y: c_int, x: c_int, ch: chtype) !void {
+    return try Window.default().mvwaddch(y, x, ch);
+}
+pub inline fn echochar(ch: chtype) !void {
+    return try Window.default().wechochar(ch);
 }
 
 //====================================================================

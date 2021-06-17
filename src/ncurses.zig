@@ -13,16 +13,18 @@ pub const cchar_t = extern struct {
     chars: [CCHARW_MAX]wchar_t,
 };
 
+// zig fmt: off
 pub const Color = enum(u8) {
-    black = 0,
-    red = 1,
-    green = 2,
-    yellow = 3,
-    blue = 4,
+    black   = 0,
+    red     = 1,
+    green   = 2,
+    yellow  = 3,
+    blue    = 4,
     magenta = 5,
-    cyan = 6,
-    white = 7,
+    cyan    = 6,
+    white   = 7,
 };
+// zig fmt: on
 
 // zig fmt: off
 pub const Key = extern enum(c_int) {
@@ -161,7 +163,7 @@ pub const Attribute = enum(u32) {
     normal     = 0,
     attributes = ncurses_bits(1, 0),
     chartext   = ncurses_bits(1, 0) - 1,
-    color      = ncurses_bits((@as(u32, 1) << 8) - 1, 0),
+    color      = ncurses_bits((1 << 8) - 1, 0),
     standout   = ncurses_bits(1, 8),
     underline  = ncurses_bits(1, 9),
     reverse    = ncurses_bits(1, 10),

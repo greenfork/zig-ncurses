@@ -14,7 +14,7 @@ pub const cchar_t = extern struct {
 };
 
 // zig fmt: off
-pub const Color = enum(u8) {
+pub const Color = extern enum(u8) {
     black   = 0,
     red     = 1,
     green   = 2,
@@ -154,7 +154,7 @@ pub const Key = extern enum(c_int) {
 // zig fmt: on
 
 // zig fmt: off
-pub const Attribute = enum(u32) {
+pub const Attribute = extern enum(u32) {
     fn ncurses_bits(mask: u32, shift: u5) u32 {
         const default_shift: u5 = 8;
         return mask << default_shift + shift;

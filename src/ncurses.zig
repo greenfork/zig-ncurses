@@ -212,7 +212,7 @@ pub const Window = struct {
     //====================================================================
 
     pub fn wprintw(self: Window, comptime format: [*:0]const u8, args: anytype) !void {
-        if (@call(.{}, c.printw, .{ self.ptr, format } ++ args) != Ok) return NcursesError.Generic;
+        if (@call(.{}, c.wprintw, .{ self.ptr, format } ++ args) != Ok) return NcursesError.Generic;
     }
 
     pub fn wgetch(self: Window) !c_int {
@@ -228,13 +228,10 @@ pub const Window = struct {
 //====================================================================
 
 pub fn printw(comptime format: [*:0]const u8, args: anytype) !void {
-    if (@call(.{}, c.printw, .{format} ++ args) != Ok) return NcursesError.Generic;
+    return try Window.default().wprintw(format, args);
 }
 pub fn getch() !c_int {
-    const result = c.getch();
-    if (result == Err) return NcursesError.Generic;
-
-    return result;
+    return try Window.default().wgetch();
 }
 
 //====================================================================

@@ -1,5 +1,9 @@
 const c = @import("c.zig");
 
+//====================================================================
+// Types
+//====================================================================
+
 pub const chtype = c_uint;
 pub const mmask_t = c_uint;
 pub const attr_t = chtype;
@@ -13,6 +17,14 @@ pub const cchar_t = extern struct {
     attr: attr_t,
     chars: [CCHARW_MAX]wchar_t,
 };
+
+pub const NcursesError = error{
+    Generic,
+};
+
+//====================================================================
+// Enums
+//====================================================================
 
 // zig fmt: off
 pub const Color = extern enum(c_short) {
@@ -184,9 +196,9 @@ pub const Attribute = extern enum(u32) {
 };
 // zig fmt: on
 
-pub const NcursesError = error{
-    Generic,
-};
+//====================================================================
+// Globals
+//====================================================================
 
 pub extern "ncurses" var curscr: *c._win_st;
 pub extern "ncurses" var newscr: *c._win_st;
@@ -198,9 +210,14 @@ pub extern "ncurses" var COLS: c_int;
 pub extern "ncurses" var ESCDELAY: c_int;
 pub extern "ncurses" var LINES: c_int;
 pub extern "ncurses" var TABSIZE: c_int;
+pub extern "ncurses" var acs_map: []chtype;
 
 pub const Window = struct {
     ptr: *c._win_st,
+
+    //====================================================================
+    // Globals
+    //====================================================================
 
     pub fn cur() Window {
         return Window{ .ptr = curscr };
@@ -242,6 +259,59 @@ pub const Window = struct {
     }
     pub fn endwin() !void {
         if (c.endwin() == Err) return NcursesError.Generic;
+    }
+    pub fn newwin(nlines: c_int, ncols: c_int, begin_y: c_int, begin_x: c_int) !Window {
+        const ptr = c.newwin(nlines, ncols, begin_y, begin_x);
+        if (ptr == null) {
+            return NcursesError.Generic;
+        } else {
+            return Window{ .ptr = ptr };
+        }
+    }
+    pub fn delwin(self: Window) !void {
+        if (c.delwin(self.ptr) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwin(self: Window, y: c_int, x: c_int) !void {
+        if (c.mvwin(self.ptr, y, x) == Err) return NcursesError.Generic;
+    }
+    pub fn subwin(self: Window, nlines: c_int, ncols: c_int, begin_y: c_int, begin_x: c_int) !Window {
+        const ptr = c.subwin(self.ptr, nlines, ncols, begin_y, begin_x);
+        if (ptr == null) {
+            return NcursesError.Generic;
+        } else {
+            return Window{ .ptr = ptr };
+        }
+    }
+    pub fn derwin(self: Window, nlines: c_int, ncols: c_int, begin_y: c_int, begin_x: c_int) !Window {
+        const ptr = c.derwin(self.ptr, nlines, ncols, begin_y, begin_x);
+        if (ptr == null) {
+            return NcursesError.Generic;
+        } else {
+            return Window{ .ptr = ptr };
+        }
+    }
+    pub fn mvderwin(self: Window, par_y: c_int, par_x: c_int) !void {
+        if (c.mvderwin(self.ptr, par_y, par_x) == Err) return NcursesError.Generic;
+    }
+    pub fn dupwin(self: Window) !Window {
+        const ptr = c.dupwin(self.ptr);
+        if (ptr == null) {
+            return NcursesError.Generic;
+        } else {
+            return Window{ .ptr = ptr };
+        }
+    }
+    pub fn wsyncup(self: Window) void {
+        c.wsyncaup(self.ptr);
+    }
+    pub fn syncok(self: Window, bf: bool) !void {
+        if (c.syncok(self.ptr, bf) == Err) return NcursesError.Generic;
+    }
+    pub fn wcursyncup(self: Window) void {
+        c.wcursyncup(self.ptr);
+    }
+    pub fn wsyncdown(self: Window) void {
+        c.wsyncdown(self.ptr);
     }
 
     //====================================================================
@@ -342,6 +412,23 @@ pub const Window = struct {
     }
 
     //====================================================================
+    // Refresh windows and lines
+    //====================================================================
+
+    pub fn wrefresh(self: Window) !void {
+        if (c.wrefresh(self.ptr) == Err) return NcursesError.Generic;
+    }
+    pub fn wnoutrefresh(self: Window) !void {
+        if (c.wnoutrefresh(self.ptr) == Err) return NcursesError.Generic;
+    }
+    pub fn redrawwin(self: Window) !void {
+        if (c.redrawwin(self.ptr) == Err) return NcursesError.Generic;
+    }
+    pub fn wredrawln(self: Window, beg_line: c_int, num_lines: c_int) !void {
+        if (c.wredrawln(self.ptr, beg_line, num_lines) == Err) return NcursesError.Generic;
+    }
+
+    //====================================================================
     // Coordinates
     //====================================================================
 
@@ -392,6 +479,29 @@ pub const Window = struct {
 
     pub fn wmove(self: Window, y: c_int, x: c_int) !void {
         if (c.wmove(self.ptr, y, x) == Err) return NcursesError.Generic;
+    }
+
+    //====================================================================
+    // Borders, lines
+    //====================================================================
+
+    pub fn wborder(self: Window, ls: chtype, rs: chtype, ts: chtype, bs: chtype, tl: chtype, tr: chtype, bl: chtype, br: chtype) !void {
+        if (c.wborder(self.ptr, ls, rs, ts, bs, tl, tr, bl, br) == Err) return NcursesError.Generic;
+    }
+    pub fn box(self: Window, verch: chtype, horch: chtype) !void {
+        if (c.box(self.ptr, verch, horch) == Err) return NcursesError.Generic;
+    }
+    pub fn whline(self: Window, ch: chtype, n: c_int) !void {
+        if (c.whline(self.ptr, ch, n) == Err) return NcursesError.Generic;
+    }
+    pub fn wvline(self: Window, ch: chtype, n: c_int) !void {
+        if (c.wvline(self.ptr, ch, n) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwhline(self: Window, y: c_int, x: c_int, ch: chtype, n: c_int) !void {
+        if (c.mvwhline(self.ptr, ch, n) == Err) return NcursesError.Generic;
+    }
+    pub fn mvwvline(self: Window, y: c_int, x: c_int, ch: chtype, n: c_int) !void {
+        if (c.mvwvline(self.ptr, ch, n) == Err) return NcursesError.Generic;
     }
 };
 
@@ -512,8 +622,11 @@ pub inline fn mvchgat(y: c_int, x: c_int, n: c_int, attr: attr_t, pair: c_short,
 // Refresh windows and lines
 //====================================================================
 
-pub fn refresh() !void {
-    if (c.refresh() == Err) return NcursesError.Generic;
+pub inline fn refresh() !void {
+    return try Window.std().wrefresh();
+}
+pub fn doupdate() !void {
+    if (c.doupdate() == Err) return NcursesError.Generic;
 }
 
 //====================================================================
@@ -522,6 +635,26 @@ pub fn refresh() !void {
 
 pub inline fn move(y: c_int, x: c_int) !void {
     return try Window.std().wmove(y, x);
+}
+
+//====================================================================
+// Borders, lines
+//====================================================================
+
+pub inline fn border(ls: chtype, rs: chtype, ts: chtype, bs: chtype, tl: chtype, tr: chtype, bl: chtype, br: chtype) !void {
+    return try Window.std().wborder(self.ptr, ls, rs, ts, bs, tl, tr, bl, br);
+}
+pub inline fn hline(ch: chtype, n: c_int) !void {
+    return try Window.std().whline(self.ptr, ch, n);
+}
+pub inline fn vline(ch: chtype, n: c_int) !void {
+    return try Window.std().wvline(self.ptr, ch, n);
+}
+pub inline fn mvhline(y: c_int, x: c_int, ch: chtype, n: c_int) !void {
+    return try Window.std().mvwhline(self.ptr, ch, n);
+}
+pub inline fn mvvline(y: c_int, x: c_int, ch: chtype, n: c_int) !void {
+    return try Window.std().mvwvline(self.ptr, ch, n);
 }
 
 //====================================================================

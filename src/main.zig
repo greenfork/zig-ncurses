@@ -7,37 +7,37 @@ pub fn main() anyerror!void {
     var width: c_int = undefined;
     var height: c_int = undefined;
 
-    _ = Window.initscr();
-    defer Window.endwin() catch {};
+    _ = try initscr();
+    defer endwin() catch {};
 
-    try keypad(Window.std(), true);
+    try keypad(stdscr, true);
     height = 3;
     width = 10;
-    starty = @divTrunc(Window.lines() - height, 2);
-    startx = @divTrunc(Window.cols() - width, 2);
+    starty = @divTrunc(LINES - height, 2);
+    startx = @divTrunc(COLS - width, 2);
     try printw("Press F1 to exit", .{});
     try refresh();
     var my_win = try create_newwin(height, width, starty, startx);
 
     var ch = try getch();
-    while (ch != @enumToInt(Key.f1)) : (ch = try getch()) {
+    while (ch != KEY_F(1)) : (ch = try getch()) {
         switch (ch) {
-            @enumToInt(Key.left) => {
+            KEY_LEFT => {
                 try destroy_win(my_win);
                 startx -= 1;
                 my_win = try create_newwin(height, width, starty, startx);
             },
-            @enumToInt(Key.right) => {
+            KEY_RIGHT => {
                 try destroy_win(my_win);
                 startx += 1;
                 my_win = try create_newwin(height, width, starty, startx);
             },
-            @enumToInt(Key.up) => {
+            KEY_UP => {
                 try destroy_win(my_win);
                 starty -= 1;
                 my_win = try create_newwin(height, width, starty, startx);
             },
-            @enumToInt(Key.down) => {
+            KEY_DOWN => {
                 try destroy_win(my_win);
                 starty += 1;
                 my_win = try create_newwin(height, width, starty, startx);
@@ -51,7 +51,7 @@ pub fn main() anyerror!void {
 }
 
 fn create_newwin(height: c_int, width: c_int, starty: c_int, startx: c_int) !Window {
-    const local_win = try Window.newwin(height, width, starty, startx);
+    const local_win = try newwin(height, width, starty, startx);
     try local_win.box(0, 0);
     try local_win.wrefresh();
     return local_win;

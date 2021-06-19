@@ -1,3 +1,4 @@
+const std = @import("std");
 const c = @import("c.zig");
 
 //====================================================================
@@ -464,11 +465,14 @@ pub const Window = struct {
     // Printing
     //====================================================================
 
-    pub fn wprintw(self: Window, comptime format: [:0]const u8, args: anytype) !void {
-        if (@call(.{}, c.wprintw, .{ self.ptr, format } ++ args) == Err) return NcursesError.GenericError;
+    // FIXME: casting `format` to `[*:0]const u8` with `format.ptr` doesn't work, the string passed
+    // in `args` argument must necessarily be a pointer already, probably a bug in Zig. Error:
+    // error: TODO: support C ABI for more targets. https://github.com/ziglang/zig/issues/1481
+    pub fn wprintw(self: Window, format: [:0]const u8, args: anytype) !void {
+        if (@call(.{}, c.wprintw, .{ self.ptr, format.ptr } ++ args) == Err) return NcursesError.GenericError;
     }
-    pub fn mvwprintw(self: Window, y: c_int, x: c_int, comptime format: [:0]const u8, args: anytype) !void {
-        if (@call(.{}, c.mvwprintw, .{ self.ptr, y, x, format } ++ args) == Err) return NcursesError.GenericError;
+    pub fn mvwprintw(self: Window, y: c_int, x: c_int, format: [:0]const u8, args: anytype) !void {
+        if (@call(.{}, c.mvwprintw, .{ self.ptr, y, x, format.ptr } ++ args) == Err) return NcursesError.GenericError;
     }
     pub fn waddch(self: Window, ch: chtype) !void {
         if (c.waddch(self.ptr, ch) == Err) return NcursesError.GenericError;
@@ -479,6 +483,50 @@ pub const Window = struct {
     pub fn wechochar(self: Window, ch: chtype) !void {
         if (c.wechochar(self.ptr, ch) == Err) return NcursesError.GenericError;
     }
+    pub fn waddstr(self: Window, str: [:0]const u8) !void {
+        if (c.waddstr(self.ptr, str.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn waddnstr(self: Window, str: [:0]const u8, n: c_int) !void {
+        if (c.waddnstr(self.ptr, str.ptr, n) == Err) return NcursesError.GenericError;
+    }
+    pub fn mvwaddstr(self: Window, y: c_int, x: c_int, str: [:0]const u8) !void {
+        if (c.mvwaddstr(self.ptr, y, x, str.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn mvwaddnstr(self: Window, y: c_int, x: c_int, str: [:0]const u8, n: c_int) !void {
+        if (c.mvwaddnstr(self.ptr, y, x, str.ptr, n) == Err) return NcursesError.GenericError;
+    }
+
+    //====================================================================
+    // Printing with Zig (more fun)
+    //====================================================================
+
+    pub const Writer = std.io.Writer(Window, NcursesError, waddstrwrite);
+
+    pub fn writer(self: Window) Writer {
+        return .{ .context = self };
+    }
+
+    fn waddstrwrite(self: Window, str: []const u8) !usize {
+        if (c.waddnstr(self.ptr, str.ptr, @intCast(c_int, str.len)) == Err) return NcursesError.GenericError;
+        return str.len;
+    }
+
+    pub fn wprintwzig(self: Window, comptime format: []const u8, args: anytype) !void {
+        try self.writer().print(format, args);
+    }
+    pub fn mvwprintwzig(self: Window, y: c_int, x: c_int, comptime format: []const u8, args: anytype) !void {
+        try self.wmove(y, x);
+        try self.writer().print(format, args);
+    }
+    pub fn waddstrzig(self: Window, str: []const u8) !void {
+        try self.writer().writeAll(str);
+    }
+    pub fn mvwaddstrzig(self: Window, y: c_int, x: c_int, str: []const u8) !void {
+        try self.wmove(y, x);
+        try self.writer().writeAll(str);
+    }
+    pub const waddnstrzig = @compileError("not implemented: use `win.waddstrzig(str[0..n])` instead");
+    pub const mvwaddnstrzig = @compileError("not implemented: use `win.mvwaddstrzig(str[0..n])` instead");
 
     //====================================================================
     // Input
@@ -714,6 +762,37 @@ pub inline fn mvaddch(y: c_int, x: c_int, ch: chtype) !void {
 pub inline fn echochar(ch: chtype) !void {
     return try stdscr.wechochar(ch);
 }
+pub inline fn addstr(str: [:0]const u8) !void {
+    return try stdscr.waddstr(str);
+}
+pub inline fn addnstr(str: [:0]const u8, n: c_int) !void {
+    return try stdscr.waddnstr(str, n);
+}
+pub inline fn mvaddstr(y: c_int, x: c_int, str: [:0]const u8) !void {
+    return try stdscr.mvwaddstr(y, x, str);
+}
+pub inline fn mvaddnstr(y: c_int, x: c_int, str: [:0]const u8, n: c_int) !void {
+    return try stdscr.mvwaddnstr(y, x, str, n);
+}
+
+//====================================================================
+// Printing with Zig (more fun)
+//====================================================================
+
+pub inline fn printwzig(comptime format: []const u8, args: anytype) !void {
+    try stdscr.wprintwzig(format, args);
+}
+pub inline fn mvprintwzig(y: c_int, x: c_int, comptime format: []const u8, args: anytype) !void {
+    try stdscr.mvwprintwzig(y, x, format, args);
+}
+pub inline fn addstrzig(str: []const u8) !void {
+    try stdscr.waddstrzig(str);
+}
+pub inline fn mvaddstrzig(y: c_int, x: c_int, str: []const u8) !void {
+    try stdscr.mvwaddstrzig(y, x, str);
+}
+pub const addnstrzig = @compileError("not implemented: use `addstrzig(str[0..n])` instead");
+pub const mvaddnstrzig = @compileError("not implemented: use `mvaddstrzig(str[0..n])` instead");
 
 //====================================================================
 // Input

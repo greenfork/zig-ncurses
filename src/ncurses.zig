@@ -4,8 +4,8 @@ const c = @import("c.zig");
 // Types
 //====================================================================
 
-pub const chtype = c_uint;
-pub const mmask_t = c_uint;
+pub const chtype = if (c._LP64 == 1) c_uint else u32;
+pub const mmask_t = if (c._LP64 == 1) c_uint else u32;
 pub const attr_t = chtype;
 
 pub const cchar_t = extern struct {
@@ -33,6 +33,8 @@ pub const COLOR_BLUE = c.COLOR_BLUE;       // 4
 pub const COLOR_MAGENTA = c.COLOR_MAGENTA; // 5
 pub const COLOR_CYAN = c.COLOR_CYAN;       // 6
 pub const COLOR_WHITE = c.COLOR_WHITE;     // 7
+pub const COLOR_PAIR = c.COLOR_PAIR;       // (NCURSES_BITS((n), 0) & A_COLOR)
+pub const PAIR_NUMBER = c.PAIR_NUMBER;     // (NCURSES_CAST(int,((NCURSES_CAST(unsigned long,(a)) & A_COLOR) >> NCURSES_ATTR_SHIFT)))
 
 pub const ACS_ULCORNER = c.ACS_ULCORNER; // NCURSES_ACS('l') /* upper left corner */
 pub const ACS_LLCORNER = c.ACS_LLCORNER; // NCURSES_ACS('m') /* lower left corner */
@@ -642,10 +644,14 @@ pub const Window = struct {
         if (c.wvline(self.ptr, ch, n) == Err) return NcursesError.GenericError;
     }
     pub fn mvwhline(self: Window, y: c_int, x: c_int, ch: chtype, n: c_int) !void {
-        if (c.mvwhline(self.ptr, ch, n) == Err) return NcursesError.GenericError;
+        if (c.mvwhline(self.ptr, y, x, ch, n) == Err) return NcursesError.GenericError;
     }
     pub fn mvwvline(self: Window, y: c_int, x: c_int, ch: chtype, n: c_int) !void {
-        if (c.mvwvline(self.ptr, ch, n) == Err) return NcursesError.GenericError;
+        if (c.mvwvline(self.ptr, y, x, ch, n) == Err) return NcursesError.GenericError;
+    }
+
+    pub fn keypad(self: Window, bf: bool) !void {
+        if (c.keypad(self.ptr, bf) == Err) return NcursesError.GenericError;
     }
 };
 
@@ -726,9 +732,6 @@ pub fn raw() !void {
 pub fn noraw() !void {
     if (c.noraw() == Err) return NcursesError.GenericError;
 }
-pub fn keypad(self: Window, bf: bool) !void {
-    if (c.keypad(self.ptr, bf) == Err) return NcursesError.GenericError;
-}
 
 //====================================================================
 // Character and window attribute control
@@ -786,19 +789,19 @@ pub inline fn move(y: c_int, x: c_int) !void {
 //====================================================================
 
 pub inline fn border(ls: chtype, rs: chtype, ts: chtype, bs: chtype, tl: chtype, tr: chtype, bl: chtype, br: chtype) !void {
-    return try stdscr.wborder(self.ptr, ls, rs, ts, bs, tl, tr, bl, br);
+    return try stdscr.wborder(ls, rs, ts, bs, tl, tr, bl, br);
 }
 pub inline fn hline(ch: chtype, n: c_int) !void {
-    return try stdscr.whline(self.ptr, ch, n);
+    return try stdscr.whline(ch, n);
 }
 pub inline fn vline(ch: chtype, n: c_int) !void {
-    return try stdscr.wvline(self.ptr, ch, n);
+    return try stdscr.wvline(ch, n);
 }
 pub inline fn mvhline(y: c_int, x: c_int, ch: chtype, n: c_int) !void {
-    return try stdscr.mvwhline(self.ptr, ch, n);
+    return try stdscr.mvwhline(y, x, ch, n);
 }
 pub inline fn mvvline(y: c_int, x: c_int, ch: chtype, n: c_int) !void {
-    return try stdscr.mvwvline(self.ptr, ch, n);
+    return try stdscr.mvwvline(y, x, ch, n);
 }
 
 //====================================================================

@@ -10,7 +10,7 @@ pub fn main() anyerror!void {
     _ = try initscr();
     defer endwin() catch {};
 
-    try keypad(stdscr, true);
+    try stdscr.keypad(true);
     height = 3;
     width = 10;
     starty = @divTrunc(LINES - height, 2);

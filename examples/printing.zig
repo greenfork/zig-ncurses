@@ -3,6 +3,7 @@ pub usingnamespace @import("ncurses.zig");
 
 pub fn main() anyerror!void {
     _ = try initscr();
+
     if (!has_colors()) {
         try endwin();
         std.debug.print("Your terminal does not support color\n", .{});

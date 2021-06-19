@@ -22,6 +22,21 @@ pub const NcursesError = error{
 // Constants defined as macros in C
 //====================================================================
 
+// Macro NCURSES_BITS is too hard for Zig to parse right now.
+
+pub const NCURSES_ATTR_SHIFT: u5 = 8;
+
+pub fn NCURSES_BITS(mask: c_uint, shift: u5) c_uint {
+    return @intCast(chtype, mask) << (shift + NCURSES_ATTR_SHIFT);
+}
+
+pub fn COLOR_PAIR(n: c_int) c_int {
+    return @intCast(c_int, NCURSES_BITS(@intCast(c_uint, n), 0) & A_COLOR);
+}
+
+// (NCURSES_CAST(int,((NCURSES_CAST(unsigned long,(a)) & A_COLOR) >> NCURSES_ATTR_SHIFT)))
+pub const PAIR_NUMBER = c.PAIR_NUMBER;
+
 // zig fmt: off
 const Err = c.ERR; // -1
 const Ok = c.OK;   // 0
@@ -34,8 +49,6 @@ pub const COLOR_BLUE = c.COLOR_BLUE;       // 4
 pub const COLOR_MAGENTA = c.COLOR_MAGENTA; // 5
 pub const COLOR_CYAN = c.COLOR_CYAN;       // 6
 pub const COLOR_WHITE = c.COLOR_WHITE;     // 7
-pub const COLOR_PAIR = c.COLOR_PAIR;       // (NCURSES_BITS((n), 0) & A_COLOR)
-pub const PAIR_NUMBER = c.PAIR_NUMBER;     // (NCURSES_CAST(int,((NCURSES_CAST(unsigned long,(a)) & A_COLOR) >> NCURSES_ATTR_SHIFT)))
 
 pub const ACS_ULCORNER = c.ACS_ULCORNER; // NCURSES_ACS('l') /* upper left corner */
 pub const ACS_LLCORNER = c.ACS_LLCORNER; // NCURSES_ACS('m') /* lower left corner */
@@ -91,26 +104,26 @@ pub const _WRAPPED = c._WRAPPED;     // 0x40 /* cursor was just wrappped */
 pub const _NOCHANGE = c._NOCHANGE; // -1
 pub const _NEWINDEX = c._NEWINDEX; // -1
 
-pub const A_NORMAL = c.A_NORMAL;         // (1U - 1U)
-pub const A_ATTRIBUTES = c.A_ATTRIBUTES; // NCURSES_BITS(~(1U - 1U),0)
-pub const A_CHARTEXT = c.A_CHARTEXT;     // (NCURSES_BITS(1U,0) - 1U)
-pub const A_COLOR = c.A_COLOR;           // NCURSES_BITS(((1U) << 8) - 1U,0)
-pub const A_STANDOUT = c.A_STANDOUT;     // NCURSES_BITS(1U,8)
-pub const A_UNDERLINE = c.A_UNDERLINE;   // NCURSES_BITS(1U,9)
-pub const A_REVERSE = c.A_REVERSE;       // NCURSES_BITS(1U,10)
-pub const A_BLINK = c.A_BLINK;           // NCURSES_BITS(1U,11)
-pub const A_DIM = c.A_DIM;               // NCURSES_BITS(1U,12)
-pub const A_BOLD = c.A_BOLD;             // NCURSES_BITS(1U,13)
-pub const A_ALTCHARSET = c.A_ALTCHARSET; // NCURSES_BITS(1U,14)
-pub const A_INVIS = c.A_INVIS;           // NCURSES_BITS(1U,15)
-pub const A_PROTECT = c.A_PROTECT;       // NCURSES_BITS(1U,16)
-pub const A_HORIZONTAL = c.A_HORIZONTAL; // NCURSES_BITS(1U,17)
-pub const A_LEFT = c.A_LEFT;             // NCURSES_BITS(1U,18)
-pub const A_LOW = c.A_LOW;               // NCURSES_BITS(1U,19)
-pub const A_RIGHT = c.A_RIGHT;           // NCURSES_BITS(1U,20)
-pub const A_TOP = c.A_TOP;               // NCURSES_BITS(1U,21)
-pub const A_VERTICAL = c.A_VERTICAL;     // NCURSES_BITS(1U,22)
-pub const A_ITALIC = c.A_ITALIC;         // NCURSES_BITS(1U,23) /* ncurses extension */
+pub const A_NORMAL    : attr_t = 0;
+pub const A_ATTRIBUTES: attr_t = NCURSES_BITS(~@as(c_uint, 0), 0);
+pub const A_CHARTEXT  : attr_t = NCURSES_BITS(1, 0) - 1;
+pub const A_COLOR     : attr_t = NCURSES_BITS((@as(c_uint, 1) << 8) - 1, 0);
+pub const A_STANDOUT  : attr_t = NCURSES_BITS(1, 8);
+pub const A_UNDERLINE : attr_t = NCURSES_BITS(1, 9);
+pub const A_REVERSE   : attr_t = NCURSES_BITS(1, 10);
+pub const A_BLINK     : attr_t = NCURSES_BITS(1, 11);
+pub const A_DIM       : attr_t = NCURSES_BITS(1, 12);
+pub const A_BOLD      : attr_t = NCURSES_BITS(1, 13);
+pub const A_ALTCHARSET: attr_t = NCURSES_BITS(1, 14);
+pub const A_INVIS     : attr_t = NCURSES_BITS(1, 15);
+pub const A_PROTECT   : attr_t = NCURSES_BITS(1, 16);
+pub const A_HORIZONTAL: attr_t = NCURSES_BITS(1, 17);
+pub const A_LEFT      : attr_t = NCURSES_BITS(1, 18);
+pub const A_LOW       : attr_t = NCURSES_BITS(1, 19);
+pub const A_RIGHT     : attr_t = NCURSES_BITS(1, 20);
+pub const A_TOP       : attr_t = NCURSES_BITS(1, 21);
+pub const A_VERTICAL  : attr_t = NCURSES_BITS(1, 22);
+pub const A_ITALIC    : attr_t = NCURSES_BITS(1, 23);
 
 pub const KEY_CODE_YES = c.KEY_CODE_YES;   // 0400  /* A wchar_t contains a key code */
 pub const KEY_MIN = c.KEY_MIN;             // 0401  /* Minimum curses key */
@@ -716,6 +729,23 @@ pub const Window = struct {
     }
 
     //====================================================================
+    // Clearing
+    //====================================================================
+
+    pub fn werase(self: Window) !void {
+        if (c.werase(self.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn wclear(self: Window) !void {
+        if (c.wclear(self.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn wclrtobot(self: Window) !void {
+        if (c.wclrtobot(self.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn wclrtoeol(self: Window) !void {
+        if (c.wclrtoeol(self.ptr) == Err) return NcursesError.GenericError;
+    }
+
+    //====================================================================
     // Borders, lines
     //====================================================================
 
@@ -780,16 +810,16 @@ pub inline fn mvaddnstr(y: c_int, x: c_int, str: [:0]const u8, n: c_int) !void {
 //====================================================================
 
 pub inline fn printwzig(comptime format: []const u8, args: anytype) !void {
-    try stdscr.wprintwzig(format, args);
+    return try stdscr.wprintwzig(format, args);
 }
 pub inline fn mvprintwzig(y: c_int, x: c_int, comptime format: []const u8, args: anytype) !void {
-    try stdscr.mvwprintwzig(y, x, format, args);
+    return try stdscr.mvwprintwzig(y, x, format, args);
 }
 pub inline fn addstrzig(str: []const u8) !void {
-    try stdscr.waddstrzig(str);
+    return try stdscr.waddstrzig(str);
 }
 pub inline fn mvaddstrzig(y: c_int, x: c_int, str: []const u8) !void {
-    try stdscr.mvwaddstrzig(y, x, str);
+    return try stdscr.mvwaddstrzig(y, x, str);
 }
 pub const addnstrzig = @compileError("not implemented: use `addstrzig(str[0..n])` instead");
 pub const mvaddnstrzig = @compileError("not implemented: use `mvaddstrzig(str[0..n])` instead");
@@ -901,6 +931,23 @@ pub fn doupdate() !void {
 
 pub inline fn move(y: c_int, x: c_int) !void {
     return try stdscr.wmove(y, x);
+}
+
+//====================================================================
+// Clearing
+//====================================================================
+
+pub inline fn erase() !void {
+    return try stdscr.werase();
+}
+pub inline fn clear() !void {
+    return try stdscr.wclear();
+}
+pub inline fn clrtobot() !void {
+    return try stdscr.wclrtobot();
+}
+pub inline fn clrtoeol() !void {
+    return try stdscr.wclrtoeol();
 }
 
 //====================================================================

@@ -578,45 +578,85 @@ pub const Window = struct {
     // Coordinates
     //====================================================================
 
-    pub fn getyx(self: Window, y: *c_int, x: *c_int) void {
-        y.* = getcury(self);
-        x.* = getcurx(self);
+    pub fn getyx(self: Window, y: *c_int, x: *c_int) !void {
+        y.* = try getcury(self);
+        x.* = try getcurx(self);
     }
-    pub inline fn getcury(self: Window) c_int {
-        return c.getcury(self.ptr);
+    pub inline fn getcury(self: Window) !c_int {
+        const result = c.getcury(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub inline fn getcurx(self: Window) c_int {
-        return c.getcurx(self.ptr);
+    pub inline fn getcurx(self: Window) !c_int {
+        const result = c.getcurx(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub fn getbegyx(self: Window, y: *c_int, x: *c_int) void {
-        y.* = getbegy(self);
-        x.* = getbegx(self);
+    pub fn getbegyx(self: Window, y: *c_int, x: *c_int) !void {
+        y.* = try getbegy(self);
+        x.* = try getbegx(self);
     }
-    pub inline fn getbegy(self: Window) c_int {
-        return c.getbegy(self.ptr);
+    pub inline fn getbegy(self: Window) !c_int {
+        const result = c.getbegy(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub inline fn getbegx(self: Window) c_int {
-        return c.getbegx(self.ptr);
+    pub inline fn getbegx(self: Window) !c_int {
+        const result = c.getbegx(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub fn getmaxyx(self: Window, y: *c_int, x: *c_int) void {
-        y.* = getmaxy(self);
-        x.* = getmaxx(self);
+    pub fn getmaxyx(self: Window, y: *c_int, x: *c_int) !void {
+        y.* = try getmaxy(self);
+        x.* = try getmaxx(self);
     }
-    pub inline fn getmaxy(self: Window) c_int {
-        return c.getmaxy(self.ptr);
+    pub inline fn getmaxy(self: Window) !c_int {
+        const result = c.getmaxy(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub inline fn getmaxx(self: Window) c_int {
-        return c.getmaxx(self.ptr);
+    pub inline fn getmaxx(self: Window) !c_int {
+        const result = c.getmaxx(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub fn getparyx(self: Window, y: *c_int, x: *c_int) void {
-        y.* = getpary(self);
-        x.* = getparx(self);
+    pub fn getparyx(self: Window, y: *c_int, x: *c_int) !void {
+        y.* = try getpary(self);
+        x.* = try getparx(self);
     }
-    pub inline fn getpary(self: Window) c_int {
-        return c.getpary(self.ptr);
+    pub inline fn getpary(self: Window) !c_int {
+        const result = c.getpary(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
-    pub inline fn getparx(self: Window) c_int {
-        return c.getparx(self.ptr);
+    pub inline fn getparx(self: Window) !c_int {
+        const result = c.getparx(self.ptr);
+        if (result == Err) {
+            return NcursesError.GenericError;
+        } else {
+            return result;
+        }
     }
 
     //====================================================================

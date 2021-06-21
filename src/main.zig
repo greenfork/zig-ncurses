@@ -22,8 +22,6 @@ pub fn main() anyerror!void {
 
     _ = try initscr();
     defer endwin() catch {};
-    try raw();
-    try stdscr.keypad(true);
     try noecho();
     try clear();
     try cbreak();
@@ -38,11 +36,11 @@ pub fn main() anyerror!void {
     try attroff(A_REVERSE);
 
     const menu_win = try newwin(height, width, starty, startx);
+    try menu_win.keypad(true);
     try printMenu(menu_win, highlight);
 
     while (true) {
-        // c = try menu_win.wgetch();
-        c = try stdscr.wgetch();
+        c = try menu_win.wgetch();
         switch (c) {
             KEY_MOUSE => {
                 try getmouse(&event);

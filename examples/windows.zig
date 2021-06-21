@@ -1,5 +1,5 @@
 const std = @import("std");
-pub usingnamespace @import("ncurses.zig");
+pub usingnamespace @import("ncurses").ncurses;
 
 pub fn main() anyerror!void {
     var startx: c_int = undefined;

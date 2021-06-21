@@ -1,5 +1,5 @@
 const std = @import("std");
-pub usingnamespace @import("ncurses.zig");
+pub usingnamespace @import("ncurses").ncurses;
 
 const WIN_BORDER = struct {
     ls: chtype,

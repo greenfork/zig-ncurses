@@ -1,29 +1,32 @@
 const std = @import("std");
 
-pub fn build(b: *std.build.Builder) void {
-    // Standard target options allows the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
-    const target = b.standardTargetOptions(.{});
+const Builder = std.build.Builder;
+const Mode = builtin.Mode;
 
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
+pub fn build(b: *Builder) void {
+    const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("dmi", "src/main.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.linkLibC();
-    exe.linkSystemLibrary("ncurses");
-    exe.install();
-
-    const run_cmd = exe.run();
-    run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
+    const example_step = b.step("examples", "Build examples");
+    inline for (.{
+        "alternative_charset",
+        "borders",
+        "keys",
+        "mouse",
+        "printing",
+        "windows",
+    }) |name| {
+        const example = b.addExecutable(name, "examples/" ++ name ++ ".zig");
+        example.addPackagePath("ncurses", "lib.zig");
+        example.setBuildMode(mode);
+        example.setTarget(target);
+        example.linkLibC();
+        example.linkSystemLibrary("curses");
+        example.install();
+        example_step.dependOn(&example.step);
     }
 
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
+    const all_step = b.step("all", "Build everything");
+    all_step.dependOn(example_step);
+    b.default_step.dependOn(all_step);
 }

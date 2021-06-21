@@ -51,6 +51,30 @@ pub fn NCURSES_MOUSE_MASK(b: u5, m: c_uint) mmask_t {
     return m << (b - 1) * 5;
 }
 
+pub fn KEY_F(n: c_int) c_int {
+    std.debug.assert(0 <= n and n <= 64);
+    return KEY_F0 + n;
+}
+
+pub fn BUTTON_RELEASE(event_state: c_long, button_number: c_long) c_long {
+    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_RELEASED);
+}
+pub fn BUTTON_PRESS(event_state: c_long, button_number: c_long) c_long {
+    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_PRESSED);
+}
+pub fn BUTTON_CLICK(event_state: c_long, button_number: c_long) c_long {
+    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_CLICKED);
+}
+pub fn BUTTON_DOUBLE_CLICK(event_state: c_long, button_number: c_long) c_long {
+    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_DOUBLE_CLICKED);
+}
+pub fn BUTTON_TRIPLE_CLICK(event_state: c_long, button_number: c_long) c_long {
+    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_TRIPLE_CLICKED);
+}
+pub fn BUTTON_RESERVED_EVENT(event_state: c_long, button_number: c_long) c_long {
+    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_RESERVED_EVENT);
+}
+
 // zig fmt: off
 const Err = c.ERR; // -1
 const Ok = c.OK;   // 0
@@ -407,14 +431,6 @@ pub const OPTIMIZE_MVCUR = c.OPTIMIZE_MVCUR;
 pub const OPTIMIZE_HASHMAP = c.OPTIMIZE_HASHMAP;
 pub const OPTIMIZE_SCROLL = c.OPTIMIZE_SCROLL;
 pub const OPTIMIZE_ALL = c.OPTIMIZE_ALL;
-
-pub const KEY_F = c.KEY_F;                                 // (KEY_F0+(n)) /* Value of function key n */
-pub const BUTTON_RELEASE = c.BUTTON_RELEASE;               // ((e) & NCURSES_MOUSE_MASK(x, 001))
-pub const BUTTON_PRESS = c.BUTTON_PRESS;                   // ((e) & NCURSES_MOUSE_MASK(x, 002))
-pub const BUTTON_CLICK = c.BUTTON_CLICK;                   // ((e) & NCURSES_MOUSE_MASK(x, 004))
-pub const BUTTON_DOUBLE_CLICK = c.BUTTON_DOUBLE_CLICK;     // ((e) & NCURSES_MOUSE_MASK(x, 010))
-pub const BUTTON_TRIPLE_CLICK = c.BUTTON_TRIPLE_CLICK;     // ((e) & NCURSES_MOUSE_MASK(x, 020))
-pub const BUTTON_RESERVED_EVENT = c.BUTTON_RESERVED_EVENT; // ((e) & NCURSES_MOUSE_MASK(x, 040))
 // zig fmt: on
 
 //====================================================================

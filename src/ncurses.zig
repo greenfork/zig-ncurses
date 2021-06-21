@@ -7,8 +7,8 @@ const c = @import("c.zig");
 
 pub const chtype = if (c._LP64 == 1) c_uint else u32;
 pub const mmask_t = if (c._LP64 == 1) c_uint else u32;
-// pub const mmask_t = c_ulong;
 pub const attr_t = chtype;
+pub const wchar_t = c.wchar_t;
 
 pub const cchar_t = extern struct {
     attr: attr_t,
@@ -797,6 +797,48 @@ pub const Window = struct {
     pub fn wmouse_trafo(self: Window, pY: c_int, pX: c_int, to_screen: bool) bool {
         return c.wmouse_trafo(self.ptr, pY, pX, to_screen);
     }
+
+    //====================================================================
+    // Utility functions
+    //====================================================================
+
+    pub fn putwin(self: Window, file: c.FILE) !void {
+        if (c.putwin(file) == Err) return NcursesError.GenericError;
+    }
+
+    //====================================================================
+    // Overlay
+    //====================================================================
+
+    pub fn overlay(srcwin: Window, dstwin: Window) !void {
+        if (c.overlay(srcwin.ptr, dstwin.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn overwrite(srcwin: Window, dstwin: Window) !void {
+        if (c.overwrite(srcwin.ptr, dstwin.ptr) == Err) return NcursesError.GenericError;
+    }
+    pub fn copywin(
+        srcwin: Window,
+        dstwin: Window,
+        sminrow: c_int,
+        smincol: c_int,
+        dminrow: c_int,
+        dmincol: c_int,
+        dmaxrow: c_int,
+        dmaxcol: c_int,
+        overlay: c_int,
+    ) !void {
+        if (c.copywin(
+            srcwin.ptr,
+            dstwin.ptr,
+            sminrow,
+            smincol,
+            dminrow,
+            dmincol,
+            dmaxrow,
+            dmaxcol,
+            overlay,
+        ) == Err) return NcursesError.GenericError;
+    }
 };
 
 //====================================================================
@@ -1074,4 +1116,79 @@ pub fn pair_number(attrs: c_int) c_int {
 }
 pub fn color_pair(n: c_int) c_int {
     return ncursesBits(n, 0) & @enumToInt(Attribute.color);
+}
+
+//====================================================================
+// Screen dump/restore
+//====================================================================
+
+pub fn scr_dump(filename: [:0]const u8) !void {
+    if (c.scr_dump(filename.ptr) == Err) return NcursesError.GenericError;
+}
+pub fn scr_restore(filename: [:0]const u8) !void {
+    if (c.scr_restore(filename.ptr) == Err) return NcursesError.GenericError;
+}
+pub fn scr_init(filename: [:0]const u8) !void {
+    if (c.scr_init(filename.ptr) == Err) return NcursesError.GenericError;
+}
+pub fn scr_set(filename: [:0]const u8) !void {
+    if (c.scr_set(filename.ptr) == Err) return NcursesError.GenericError;
+}
+
+//====================================================================
+// Utility functions
+//====================================================================
+
+pub fn unctrl(ch: chtype) ![*:0]const u8 {
+    if (c.unctrl(ch)) |result| {
+        return result;
+    } else {
+        return NcursesError.GenericError;
+    }
+}
+pub fn wunctrl(ch: cchar_t) ![*:0]const wchar_t {
+    if (c.wunctrl(ch)) |result| {
+        return result;
+    } else {
+        return NcursesError.GenericError;
+    }
+}
+pub fn keyname(ch: c_int) ![*:0]const u8 {
+    if (c.keyname(ch)) |result| {
+        return result;
+    } else {
+        return NcursesError.GenericError;
+    }
+}
+pub fn key_name(ch: wchar_t) ![*:0]const u8 {
+    if (c.keyname(ch)) |result| {
+        return result;
+    } else {
+        return NcursesError.GenericError;
+    }
+}
+pub fn filter() void {
+    c.filter();
+}
+pub fn nofilter() void {
+    c.nofilter();
+}
+pub fn use_env(f: bool) void {
+    c.use_env(f);
+}
+pub fn use_tioctl(f: bool) void {
+    c.use_tioctl(f);
+}
+pub fn getwin(file: c.FILE) Window {
+    if (c.getwin(file)) |winptr| {
+        return Window{ .ptr = winptr };
+    } else {
+        return NcursesError.GenericError;
+    }
+}
+pub fn delay_output(ms: c_int) !void {
+    if (c.delay_output(ms) == Err) return NcursesError.GenericError;
+}
+pub fn flushinp() !void {
+    if (c.flushinp() == Err) return NcursesError.GenericError;
 }

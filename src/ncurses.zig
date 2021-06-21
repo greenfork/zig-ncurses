@@ -28,10 +28,8 @@ pub const MEVENT = extern struct {
 };
 
 //====================================================================
-// Constants defined as macros in C
+// Constants and functions defined as macros in C
 //====================================================================
-
-// Macro NCURSES_BITS is too hard for Zig to parse right now.
 
 pub const NCURSES_ATTR_SHIFT: u5 = 8;
 
@@ -76,17 +74,17 @@ pub fn BUTTON_RESERVED_EVENT(event_state: c_long, button_number: c_long) c_long 
 }
 
 // zig fmt: off
-const Err = c.ERR; // -1
-const Ok = c.OK;   // 0
+const Err = -1;
+const Ok = 0;
 
-pub const COLOR_BLACK = c.COLOR_BLACK;     // 0
-pub const COLOR_RED = c.COLOR_RED;         // 1
-pub const COLOR_GREEN = c.COLOR_GREEN;     // 2
-pub const COLOR_YELLOW = c.COLOR_YELLOW;   // 3
-pub const COLOR_BLUE = c.COLOR_BLUE;       // 4
-pub const COLOR_MAGENTA = c.COLOR_MAGENTA; // 5
-pub const COLOR_CYAN = c.COLOR_CYAN;       // 6
-pub const COLOR_WHITE = c.COLOR_WHITE;     // 7
+pub const COLOR_BLACK   = 0;
+pub const COLOR_RED     = 1;
+pub const COLOR_GREEN   = 2;
+pub const COLOR_YELLOW  = 3;
+pub const COLOR_BLUE    = 4;
+pub const COLOR_MAGENTA = 5;
+pub const COLOR_CYAN    = 6;
+pub const COLOR_WHITE   = 7;
 
 // These values are originally from an array `acs_map`. Since we need to define Zig consts at
 // compile time, we can't use the generated array. These values are from calling these macros
@@ -594,8 +592,6 @@ pub const Window = struct {
         try self.wmove(y, x);
         try self.writer().writeAll(str);
     }
-    pub const waddnstrzig = @compileError("not implemented: use `win.waddstrzig(str[0..n])` instead");
-    pub const mvwaddnstrzig = @compileError("not implemented: use `win.mvwaddstrzig(str[0..n])` instead");
 
     //====================================================================
     // Input
@@ -1036,8 +1032,6 @@ pub inline fn addstrzig(str: []const u8) !void {
 pub inline fn mvaddstrzig(y: c_int, x: c_int, str: []const u8) !void {
     return try stdscr.mvwaddstrzig(y, x, str);
 }
-pub const addnstrzig = @compileError("not implemented: use `addstrzig(str[0..n])` instead");
-pub const mvaddnstrzig = @compileError("not implemented: use `mvaddstrzig(str[0..n])` instead");
 
 //====================================================================
 // Input

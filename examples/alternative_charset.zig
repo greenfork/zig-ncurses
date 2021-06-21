@@ -1,5 +1,4 @@
-const std = @import("std");
-pub usingnamespace @import("ncurses").ncurses;
+usingnamespace @import("ncurses").ncurses;
 
 pub fn main() anyerror!void {
     _ = try initscr();

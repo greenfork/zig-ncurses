@@ -1,5 +1,4 @@
-const std = @import("std");
-pub usingnamespace @import("ncurses").ncurses;
+usingnamespace @import("ncurses").ncurses;
 
 const WIN_BORDER = struct {
     ls: chtype,
@@ -106,8 +105,6 @@ fn create_box(p_win: *WIN, flag: bool) !void {
     if (flag) {
         try mvaddch(y, x, p_win.border.tl);
         try mvaddch(y, x + w, p_win.border.tr);
-        // std.log.debug("{d} {d} {d}\n", .{ y + h, x, p_win.border.bl });
-        // std.debug.print("{d} {d} {d}\n", .{ y + h, x, p_win.border.bl });
         try mvaddch(y + h, x, p_win.border.bl);
         try mvaddch(y + h, x + w, p_win.border.br);
         try mvhline(y, x + 1, p_win.border.ts, w - 1);

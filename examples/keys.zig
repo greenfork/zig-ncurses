@@ -1,5 +1,4 @@
-const std = @import("std");
-pub usingnamespace @import("ncurses").ncurses;
+usingnamespace @import("ncurses").ncurses;
 
 const width: c_int = 30;
 const height: c_int = 10;

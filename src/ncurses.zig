@@ -7,6 +7,7 @@ const c = @import("c.zig");
 
 pub const chtype = if (c._LP64 == 1) c_uint else u32;
 pub const mmask_t = if (c._LP64 == 1) c_uint else u32;
+// pub const mmask_t = c_ulong;
 pub const attr_t = chtype;
 
 pub const cchar_t = extern struct {
@@ -16,6 +17,14 @@ pub const cchar_t = extern struct {
 
 pub const NcursesError = error{
     GenericError,
+};
+
+pub const MEVENT = extern struct {
+    id: c_short,
+    x: c_int,
+    y: c_int,
+    z: c_int,
+    bstate: mmask_t,
 };
 
 //====================================================================
@@ -34,8 +43,13 @@ pub fn COLOR_PAIR(n: c_int) c_int {
     return @intCast(c_int, NCURSES_BITS(@intCast(c_uint, n), 0) & A_COLOR);
 }
 
-// (NCURSES_CAST(int,((NCURSES_CAST(unsigned long,(a)) & A_COLOR) >> NCURSES_ATTR_SHIFT)))
-pub const PAIR_NUMBER = c.PAIR_NUMBER;
+pub fn PAIR_NUMBER(a: c_int) c_int {
+    return @intCast(c_int, (@intCast(c_ulong, a) & A_COLOR) >> NCURSES_ATTR_SHIFT);
+}
+
+pub fn NCURSES_MOUSE_MASK(b: u5, m: c_uint) mmask_t {
+    return m << (b - 1) * 5;
+}
 
 // zig fmt: off
 const Err = c.ERR; // -1
@@ -309,42 +323,43 @@ pub const WACS_T_HLINE = c.WACS_T_HLINE;       // WACS_BTBT
 pub const WACS_T_VLINE = c.WACS_T_VLINE;       // WACS_TBTB
 pub const WACS_T_PLUS = c.WACS_T_PLUS;         // WACS_TTTT
 
-pub const NCURSES_BUTTON_RELEASED = c.NCURSES_BUTTON_RELEASED; // 001L
-pub const NCURSES_BUTTON_PRESSED = c.NCURSES_BUTTON_PRESSED;   // 002L
-pub const NCURSES_BUTTON_CLICKED = c.NCURSES_BUTTON_CLICKED;   // 004L
-pub const NCURSES_DOUBLE_CLICKED = c.NCURSES_DOUBLE_CLICKED;   // 010L
-pub const NCURSES_TRIPLE_CLICKED = c.NCURSES_TRIPLE_CLICKED;   // 020L
-pub const NCURSES_RESERVED_EVENT = c.NCURSES_RESERVED_EVENT;   // 040L
-pub const BUTTON1_RELEASED = c.BUTTON1_RELEASED;               // NCURSES_MOUSE_MASK(1, NCURSES_BUTTON_RELEASED)
-pub const BUTTON1_PRESSED = c.BUTTON1_PRESSED;                 // NCURSES_MOUSE_MASK(1, NCURSES_BUTTON_PRESSED)
-pub const BUTTON1_CLICKED = c.BUTTON1_CLICKED;                 // NCURSES_MOUSE_MASK(1, NCURSES_BUTTON_CLICKED)
-pub const BUTTON1_DOUBLE_CLICKED = c.BUTTON1_DOUBLE_CLICKED;   // NCURSES_MOUSE_MASK(1, NCURSES_DOUBLE_CLICKED)
-pub const BUTTON1_TRIPLE_CLICKED = c.BUTTON1_TRIPLE_CLICKED;   // NCURSES_MOUSE_MASK(1, NCURSES_TRIPLE_CLICKED)
-pub const BUTTON2_RELEASED = c.BUTTON2_RELEASED;               // NCURSES_MOUSE_MASK(2, NCURSES_BUTTON_RELEASED)
-pub const BUTTON2_PRESSED = c.BUTTON2_PRESSED;                 // NCURSES_MOUSE_MASK(2, NCURSES_BUTTON_PRESSED)
-pub const BUTTON2_CLICKED = c.BUTTON2_CLICKED;                 // NCURSES_MOUSE_MASK(2, NCURSES_BUTTON_CLICKED)
-pub const BUTTON2_DOUBLE_CLICKED = c.BUTTON2_DOUBLE_CLICKED;   // NCURSES_MOUSE_MASK(2, NCURSES_DOUBLE_CLICKED)
-pub const BUTTON2_TRIPLE_CLICKED = c.BUTTON2_TRIPLE_CLICKED;   // NCURSES_MOUSE_MASK(2, NCURSES_TRIPLE_CLICKED)
-pub const BUTTON3_RELEASED = c.BUTTON3_RELEASED;               // NCURSES_MOUSE_MASK(3, NCURSES_BUTTON_RELEASED)
-pub const BUTTON3_PRESSED = c.BUTTON3_PRESSED;                 // NCURSES_MOUSE_MASK(3, NCURSES_BUTTON_PRESSED)
-pub const BUTTON3_CLICKED = c.BUTTON3_CLICKED;                 // NCURSES_MOUSE_MASK(3, NCURSES_BUTTON_CLICKED)
-pub const BUTTON3_DOUBLE_CLICKED = c.BUTTON3_DOUBLE_CLICKED;   // NCURSES_MOUSE_MASK(3, NCURSES_DOUBLE_CLICKED)
-pub const BUTTON3_TRIPLE_CLICKED = c.BUTTON3_TRIPLE_CLICKED;   // NCURSES_MOUSE_MASK(3, NCURSES_TRIPLE_CLICKED)
-pub const BUTTON4_RELEASED = c.BUTTON4_RELEASED;               // NCURSES_MOUSE_MASK(4, NCURSES_BUTTON_RELEASED)
-pub const BUTTON4_PRESSED = c.BUTTON4_PRESSED;                 // NCURSES_MOUSE_MASK(4, NCURSES_BUTTON_PRESSED)
-pub const BUTTON4_CLICKED = c.BUTTON4_CLICKED;                 // NCURSES_MOUSE_MASK(4, NCURSES_BUTTON_CLICKED)
-pub const BUTTON4_DOUBLE_CLICKED = c.BUTTON4_DOUBLE_CLICKED;   // NCURSES_MOUSE_MASK(4, NCURSES_DOUBLE_CLICKED)
-pub const BUTTON4_TRIPLE_CLICKED = c.BUTTON4_TRIPLE_CLICKED;   // NCURSES_MOUSE_MASK(4, NCURSES_TRIPLE_CLICKED)
-pub const BUTTON5_RELEASED = c.BUTTON5_RELEASED;               // NCURSES_MOUSE_MASK(5, NCURSES_BUTTON_RELEASED)
-pub const BUTTON5_PRESSED = c.BUTTON5_PRESSED;                 // NCURSES_MOUSE_MASK(5, NCURSES_BUTTON_PRESSED)
-pub const BUTTON5_CLICKED = c.BUTTON5_CLICKED;                 // NCURSES_MOUSE_MASK(5, NCURSES_BUTTON_CLICKED)
-pub const BUTTON5_DOUBLE_CLICKED = c.BUTTON5_DOUBLE_CLICKED;   // NCURSES_MOUSE_MASK(5, NCURSES_DOUBLE_CLICKED)
-pub const BUTTON5_TRIPLE_CLICKED = c.BUTTON5_TRIPLE_CLICKED;   // NCURSES_MOUSE_MASK(5, NCURSES_TRIPLE_CLICKED)
-pub const BUTTON_CTRL = c.BUTTON_CTRL;                         // NCURSES_MOUSE_MASK(6, 0001L)
-pub const BUTTON_SHIFT = c.BUTTON_SHIFT;                       // NCURSES_MOUSE_MASK(6, 0002L)
-pub const BUTTON_ALT = c.BUTTON_ALT;                           // NCURSES_MOUSE_MASK(6, 0004L)
-pub const REPORT_MOUSE_POSITION = c.REPORT_MOUSE_POSITION;     // NCURSES_MOUSE_MASK(6, 0010L)
-pub const ALL_MOUSE_EVENTS = c.ALL_MOUSE_EVENTS;               // (REPORT_MOUSE_POSITION - 1)
+pub const NCURSES_BUTTON_RELEASED: c_long = 0o1;
+pub const NCURSES_BUTTON_PRESSED:  c_long = 0o2;
+pub const NCURSES_BUTTON_CLICKED:  c_long = 0o4;
+pub const NCURSES_DOUBLE_CLICKED:  c_long = 0o10;
+pub const NCURSES_TRIPLE_CLICKED:  c_long = 0o20;
+pub const NCURSES_RESERVED_EVENT:  c_long = 0o40;
+
+pub const BUTTON1_RELEASED       : mmask_t = NCURSES_MOUSE_MASK(1, NCURSES_BUTTON_RELEASED);
+pub const BUTTON1_PRESSED        : mmask_t = NCURSES_MOUSE_MASK(1, NCURSES_BUTTON_PRESSED);
+pub const BUTTON1_CLICKED        : mmask_t = NCURSES_MOUSE_MASK(1, NCURSES_BUTTON_CLICKED);
+pub const BUTTON1_DOUBLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(1, NCURSES_DOUBLE_CLICKED);
+pub const BUTTON1_TRIPLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(1, NCURSES_TRIPLE_CLICKED);
+pub const BUTTON2_RELEASED       : mmask_t = NCURSES_MOUSE_MASK(2, NCURSES_BUTTON_RELEASED);
+pub const BUTTON2_PRESSED        : mmask_t = NCURSES_MOUSE_MASK(2, NCURSES_BUTTON_PRESSED);
+pub const BUTTON2_CLICKED        : mmask_t = NCURSES_MOUSE_MASK(2, NCURSES_BUTTON_CLICKED);
+pub const BUTTON2_DOUBLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(2, NCURSES_DOUBLE_CLICKED);
+pub const BUTTON2_TRIPLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(2, NCURSES_TRIPLE_CLICKED);
+pub const BUTTON3_RELEASED       : mmask_t = NCURSES_MOUSE_MASK(3, NCURSES_BUTTON_RELEASED);
+pub const BUTTON3_PRESSED        : mmask_t = NCURSES_MOUSE_MASK(3, NCURSES_BUTTON_PRESSED);
+pub const BUTTON3_CLICKED        : mmask_t = NCURSES_MOUSE_MASK(3, NCURSES_BUTTON_CLICKED);
+pub const BUTTON3_DOUBLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(3, NCURSES_DOUBLE_CLICKED);
+pub const BUTTON3_TRIPLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(3, NCURSES_TRIPLE_CLICKED);
+pub const BUTTON4_RELEASED       : mmask_t = NCURSES_MOUSE_MASK(4, NCURSES_BUTTON_RELEASED);
+pub const BUTTON4_PRESSED        : mmask_t = NCURSES_MOUSE_MASK(4, NCURSES_BUTTON_PRESSED);
+pub const BUTTON4_CLICKED        : mmask_t = NCURSES_MOUSE_MASK(4, NCURSES_BUTTON_CLICKED);
+pub const BUTTON4_DOUBLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(4, NCURSES_DOUBLE_CLICKED);
+pub const BUTTON4_TRIPLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(4, NCURSES_TRIPLE_CLICKED);
+pub const BUTTON5_RELEASED       : mmask_t = NCURSES_MOUSE_MASK(5, NCURSES_BUTTON_RELEASED);
+pub const BUTTON5_PRESSED        : mmask_t = NCURSES_MOUSE_MASK(5, NCURSES_BUTTON_PRESSED);
+pub const BUTTON5_CLICKED        : mmask_t = NCURSES_MOUSE_MASK(5, NCURSES_BUTTON_CLICKED);
+pub const BUTTON5_DOUBLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(5, NCURSES_DOUBLE_CLICKED);
+pub const BUTTON5_TRIPLE_CLICKED : mmask_t = NCURSES_MOUSE_MASK(5, NCURSES_TRIPLE_CLICKED);
+pub const BUTTON_CTRL            : mmask_t = NCURSES_MOUSE_MASK(6, 0o1);
+pub const BUTTON_SHIFT           : mmask_t = NCURSES_MOUSE_MASK(6, 0o2);
+pub const BUTTON_ALT             : mmask_t = NCURSES_MOUSE_MASK(6, 0o4);
+pub const REPORT_MOUSE_POSITION  : mmask_t = NCURSES_MOUSE_MASK(6, 0o10);
+pub const ALL_MOUSE_EVENTS       : mmask_t = REPORT_MOUSE_POSITION - 1;
 
 pub const TRACE_DISABLE = c.TRACE_DISABLE;
 pub const TRACE_TIMES = c.TRACE_TIMES;
@@ -590,16 +605,16 @@ pub const Window = struct {
     // Character and window attribute control
     //====================================================================
 
-    pub fn wattr_get(self: Window, attrs: *attr_t, pair: *c_short, opts: *c_void) !void {
+    pub fn wattr_get(self: Window, attrs: *attr_t, pair: *c_short, opts: ?*c_void) !void {
         if (c.wattr_get(self.ptr, attrs, pair, opts) == Err) return NcursesError.GenericError;
     }
-    pub fn wattr_set(self: Window, attrs: attr_t, pair: c_short, opts: *c_void) !void {
+    pub fn wattr_set(self: Window, attrs: attr_t, pair: c_short, opts: ?*c_void) !void {
         if (c.wattr_set(self.ptr, attrs, pair, opts) == Err) return NcursesError.GenericError;
     }
-    pub fn wattr_off(self: Window, attrs: attr_t, opts: *c_void) !void {
+    pub fn wattr_off(self: Window, attrs: attr_t, opts: ?*c_void) !void {
         if (c.wattr_off(self.ptr, attrs, opts) == Err) return NcursesError.GenericError;
     }
-    pub fn wattr_on(self: Window, attrs: attr_t, opts: *c_void) !void {
+    pub fn wattr_on(self: Window, attrs: attr_t, opts: ?*c_void) !void {
         if (c.wattr_on(self.ptr, attrs, opts) == Err) return NcursesError.GenericError;
     }
     pub fn wattroff(self: Window, attrs: c_int) !void {
@@ -771,6 +786,17 @@ pub const Window = struct {
     pub fn keypad(self: Window, bf: bool) !void {
         if (c.keypad(self.ptr, bf) == Err) return NcursesError.GenericError;
     }
+
+    //====================================================================
+    // Mouse
+    //====================================================================
+
+    pub fn wenclose(self: Window, y: c_int, x: c_int) bool {
+        return c.wenclose(self.ptr, y, x);
+    }
+    pub fn wmouse_trafo(self: Window, pY: c_int, pX: c_int, to_screen: bool) bool {
+        return c.wmouse_trafo(self.ptr, pY, pX, to_screen);
+    }
 };
 
 //====================================================================
@@ -886,16 +912,16 @@ pub fn noraw() !void {
 // Character and window attribute control
 //====================================================================
 
-pub inline fn attr_get(attrs: *attr_t, pair: *c_short, opts: *c_void) !void {
+pub inline fn attr_get(attrs: *attr_t, pair: *c_short, opts: ?*c_void) !void {
     return try stdscr.wattr_get(attrs, pair, opts);
 }
-pub inline fn attr_set(attrs: attr_t, pair: c_short, opts: *c_void) !void {
+pub inline fn attr_set(attrs: attr_t, pair: c_short, opts: ?*c_void) !void {
     return try stdscr.wattr_set(attrs, pair, opts);
 }
-pub inline fn attr_off(attrs: attr_t, opts: *c_void) !void {
+pub inline fn attr_off(attrs: attr_t, opts: ?*c_void) !void {
     return try stdscr.wattr_off(attrs, opts);
 }
-pub inline fn attr_on(attrs: attr_t, opts: *c_void) !void {
+pub inline fn attr_on(attrs: attr_t, opts: ?*c_void) !void {
     return try stdscr.wattr_on(attrs, opts);
 }
 pub inline fn attroff(attrs: c_int) !void {
@@ -968,6 +994,36 @@ pub inline fn mvhline(y: c_int, x: c_int, ch: chtype, n: c_int) !void {
 }
 pub inline fn mvvline(y: c_int, x: c_int, ch: chtype, n: c_int) !void {
     return try stdscr.mvwvline(y, x, ch, n);
+}
+
+//====================================================================
+// Mouse
+//====================================================================
+
+pub fn has_mouse() bool {
+    return c.has_mouse();
+}
+pub fn getmouse(event: *MEVENT) !void {
+    if (c.getmouse(@ptrCast(*c.MEVENT, event)) == Err) return NcursesError.GenericError;
+}
+pub fn ungetmouse(event: *MEVENT) !void {
+    if (c.ungetmouse(@ptrCast(*c.MEVENT, event)) == Err) return NcursesError.GenericError;
+}
+pub fn mousemask(newmask: mmask_t, oldmask: ?*mmask_t) mmask_t {
+    return c.mousemask(newmask, oldmask orelse null);
+}
+pub inline fn mouse_trafo(pY: *c_int, pX: *c_int, to_screen: bool) bool {
+    return stdscr.wmouse_trafo(pY, pX, to_screen);
+}
+// mouseinterval  returns the previous interval value, unless the terminal was not initialized.
+// Inthat case, it returns the maximum interval value (166).
+pub fn mouseinterval(erval: c_int) !c_int {
+    const result = c.mouseinterval(erval);
+    if (result == 166) {
+        return NcursesError.GenericError;
+    } else {
+        return result;
+    }
 }
 
 //====================================================================

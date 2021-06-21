@@ -437,7 +437,9 @@ pub fn newwin(nlines: c_int, ncols: c_int, begin_y: c_int, begin_x: c_int) !Wind
 }
 
 pub const Window = struct {
-    ptr: *c._win_st,
+    ptr: WindowPointer,
+
+    const WindowPointer = *c._win_st;
 
     //====================================================================
     // Initialization and manipulation
@@ -1191,4 +1193,56 @@ pub fn delay_output(ms: c_int) !void {
 }
 pub fn flushinp() !void {
     if (c.flushinp() == Err) return NcursesError.GenericError;
+}
+
+//====================================================================
+// Low-level routines
+//====================================================================
+
+pub fn def_prog_mode() !void {
+    if (c.def_prog_mode() == Err) return NcursesError.GenericError;
+}
+pub fn def_shell_mode() !void {
+    if (c.def_shell_mode() == Err) return NcursesError.GenericError;
+}
+pub fn reset_prog_mode() !void {
+    if (c.reset_prog_mode() == Err) return NcursesError.GenericError;
+}
+pub fn reset_shell_mode() !void {
+    if (c.reset_shell_mode() == Err) return NcursesError.GenericError;
+}
+pub fn resetty() !void {
+    if (c.resetty() == Err) return NcursesError.GenericError;
+}
+pub fn savetty() !void {
+    if (c.savetty() == Err) return NcursesError.GenericError;
+}
+pub fn getsyx(y: *c_int, x: *c_int) !void {
+    if (newscr) |winptr| {
+        if (winptr.is_leaveok()) {
+            y.* = -1;
+            x.* = -1;
+        } else {
+            try winptr.getyx(y, x);
+        }
+    }
+}
+pub fn setsyx(y: *c_int, x: *c_int) !void {
+    if (newscr) |winptr| {
+        if (y == -1 and x == -1) {
+            winptr.leaveok(true);
+        } else {
+            winptr.leaveok(false);
+            try winptr.wmove(y.*, x.*);
+        }
+    }
+}
+pub fn ripoffline(line: c_int, init: fn (WindowPointer, c_int) callconv(.C) c_int) !void {
+    if (c.ripoffline(line, init) == Err) return NcursesError.GenericError;
+}
+pub fn curs_set(visibility: c_int) !void {
+    if (c.curs_set(visibility) == Err) return NcursesError.GenericError;
+}
+pub fn napms(ms: c_int) !void {
+    if (c.napms(ms) == Err) return NcursesError.GenericError;
 }

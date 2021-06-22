@@ -63,7 +63,7 @@ They also presumably do less allocations.
 `Window` also implements `Writer` Zig interface and you can access it with
 `writer` function, for example `stdscr.writer()`.
 
-## Ideas about this wrapper
+## Thoughts about this wrapper
 
 - In C error checking is tedious and sometimes completely ignored. In this
   library almost every function can return an error. Zig makes it so trivial

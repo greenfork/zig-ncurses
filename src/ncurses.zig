@@ -55,22 +55,22 @@ pub fn KEY_F(n: c_int) c_int {
 }
 
 pub fn BUTTON_RELEASE(event_state: c_long, button_number: c_long) c_long {
-    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_RELEASED);
+    return event_state & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_RELEASED);
 }
 pub fn BUTTON_PRESS(event_state: c_long, button_number: c_long) c_long {
-    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_PRESSED);
+    return event_state & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_PRESSED);
 }
 pub fn BUTTON_CLICK(event_state: c_long, button_number: c_long) c_long {
-    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_CLICKED);
+    return event_state & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_CLICKED);
 }
 pub fn BUTTON_DOUBLE_CLICK(event_state: c_long, button_number: c_long) c_long {
-    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_DOUBLE_CLICKED);
+    return event_state & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_DOUBLE_CLICKED);
 }
 pub fn BUTTON_TRIPLE_CLICK(event_state: c_long, button_number: c_long) c_long {
-    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_TRIPLE_CLICKED);
+    return event_state & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_TRIPLE_CLICKED);
 }
 pub fn BUTTON_RESERVED_EVENT(event_state: c_long, button_number: c_long) c_long {
-    return event_stage & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_RESERVED_EVENT);
+    return event_state & NCURSES_MOUSE_MASK(button_number, NCURSES_BUTTON_RESERVED_EVENT);
 }
 
 // zig fmt: off
@@ -864,16 +864,16 @@ pub const Window = struct {
         if (c.mvwinch(self.ptr, y, x) == @bitCast(chtype, Err)) return NcursesError.GenericError;
     }
     pub fn winchstr(self: Window, chstr: [*:0]chtype) !void {
-        if (c.winchstr(self.ptr, chsrt) == Err) return NcursesError.GenericError;
+        if (c.winchstr(self.ptr, chstr) == Err) return NcursesError.GenericError;
     }
     pub fn winchnstr(self: Window, chstr: [*:0]chtype, n: c_int) !void {
-        if (c.winchstr(self.ptr, chsrt, n) == Err) return NcursesError.GenericError;
+        if (c.winchstr(self.ptr, chstr, n) == Err) return NcursesError.GenericError;
     }
     pub fn mvwinchstr(self: Window, y: c_int, x: c_int, chstr: [*:0]chtype) !void {
-        if (c.mvwinchstr(self.ptr, y, x, chsrt) == Err) return NcursesError.GenericError;
+        if (c.mvwinchstr(self.ptr, y, x, chstr) == Err) return NcursesError.GenericError;
     }
     pub fn mvwinchnstr(self: Window, y: c_int, x: c_int, chstr: [*:0]chtype, n: c_int) !void {
-        if (c.mvwinchnstr(self.ptr, y, x, chsrt, n) == Err) return NcursesError.GenericError;
+        if (c.mvwinchnstr(self.ptr, y, x, chstr, n) == Err) return NcursesError.GenericError;
     }
 
     //====================================================================
@@ -892,7 +892,7 @@ pub const Window = struct {
     //====================================================================
 
     pub fn putwin(self: Window, file: c.FILE) !void {
-        if (c.putwin(file) == Err) return NcursesError.GenericError;
+        if (c.putwin(self.ptr, file) == Err) return NcursesError.GenericError;
     }
 
     //====================================================================
@@ -1053,7 +1053,7 @@ pub inline fn scanw(comptime format: [:0]const u8, args: anytype) !c_int {
     return try stdscr.wscanw(format, args);
 }
 pub inline fn mvscanw(y: c_int, x: c_int, comptime format: [:0]const u8, args: anytype) !c_int {
-    return try stdscr.mvwscanw(format, args);
+    return try stdscr.mvwscanw(y, x, format, args);
 }
 pub inline fn getstr(str: [*:0]u8) !void {
     return try stdscr.wgetstr(str);
@@ -1117,16 +1117,16 @@ pub inline fn mvinch(y: c_int, x: c_int) !chtype {
     return stdscr.mvwinch(y, x);
 }
 pub inline fn inchstr(chstr: [*:0]chtype) !void {
-    return stdscr.winchstr(chsrt);
+    return stdscr.winchstr(chstr);
 }
 pub inline fn inchnstr(chstr: [*:0]chtype, n: c_int) !void {
-    return stdscr.winchstr(chsrt, n);
+    return stdscr.winchstr(chstr, n);
 }
 pub inline fn mvinchstr(y: c_int, x: c_int, chstr: [*:0]chtype) !void {
-    return stdscr.mvwinchstr(y, x, chsrt);
+    return stdscr.mvwinchstr(y, x, chstr);
 }
 pub inline fn mvinchnstr(y: c_int, x: c_int, chstr: [*:0]chtype, n: c_int) !void {
-    return stdscr.mvwinchnstr(y, x, chsrt, n);
+    return stdscr.mvwinchnstr(y, x, chstr, n);
 }
 
 //====================================================================

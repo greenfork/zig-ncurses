@@ -1,3 +1,9 @@
+# Archived
+
+ncurses library is too hard. I still have a happy life to leave and looking at
+ncurses source code does not contribute to it. Feel free to fork it or use it
+as an education material.
+
 # Ncurses Zig wrapper
 
 Zig bindings for the ncurses library v6.2, a library for writing terminal
